@@ -17,11 +17,12 @@ Loaders
 
 The loaders are Python classes that encapsulate the logic for loading Web pages
 and saving statistics. Each one implements a common interface (specified by the
-`Loader` superclass in `loader.py`) and supports various backends:
+`Loader` superclass in `loader.py`) and currently supports the following
+backends:
 
-* PhantomJS (`phantomjs_loader.py`)
-* Chrome (`chrome_loader.py`)
-* Firefox (`firefox_loader.py`)
+* PhantomJS (`PhantomJSLoader` in `phantomjs_loader.py`)
+* Chrome (`ChromeLoader` in `chrome_loader.py`)
+* Firefox (`FirefoxLoader` in `firefox_loader.py`)
 
 API documentation available [here](...).
 	
