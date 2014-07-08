@@ -95,17 +95,16 @@ class PageResult(object):
 
 class Loader(object):
     '''Superclass for URL loader. Subclasses implement actual page load
-    functionality (e.g., using Chrome, PhantomJS, etc.).'''
+    functionality (e.g., using Chrome, PhantomJS, etc.).
+
+    :param outdir: directory for HAR files, screenshots, etc.
+    :param num_trials:  number of times to load each URL
+    :param http2: use HTTP 2 (not all subclasses support this)
+    :param timeout: timeout in seconds
+    '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60):
-        '''Initialize a Loader object.
-
-        Keyword arguments:
-        outdir -- directory for HAR files, screenshots, etc.
-        num_trials -- number of times to load each URL
-        http2 -- use HTTP 2 (not all subclasses support this)
-        timeout -- timeout in seconds
-        '''
+        '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
         self._http2 = http2
@@ -212,12 +211,12 @@ class Loader(object):
 
     @property
     def load_results(self):
-        '''Return a dict mapping URLs to a list of LoadResults.'''
+        '''A dict mapping URLs to a list of :class:`LoadResult`.'''
         return self._load_results
     
     @property
     def page_results(self):
-        '''Return a dict mapping URLs to a PageResult.'''
+        '''A dict mapping URLs to a :class:`PageResult`.'''
         return self._page_results
     
     
@@ -226,7 +225,10 @@ class Loader(object):
     ## Public methods
     ##
     def load_pages(self, urls):
-        '''Load a URL num_trials times and collect stats.'''
+        '''Load each URL in `urls` `num_trials` times and collect stats.
+        
+        :param urls: list of URLs to load
+        '''
         try:
             if not self._setup():
                 logging.error('Error setting up loader')

@@ -21,6 +21,8 @@ DISPLAY = ':99'
 # TODO: pass timeout to chrome?
 
 class ChromeLoader(Loader):
+    '''Subclass of Loader that loads pages using PhantomJS.'''
+
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)
         self._xvfb_proc = None
