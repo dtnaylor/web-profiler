@@ -9,6 +9,8 @@ PHANTOMJS = '/usr/bin/env phantomjs'
 PHANTOMLOADER = './phantomloader.js'
 
 class PhantomJSLoader(Loader):
+    '''Subclass of Loader that loads pages using PhantomJS.'''
+
     def __init__(self, **kwargs):
         super(PhantomJSLoader, self).__init__(**kwargs)
         if self._http2:

@@ -11,6 +11,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+.. automodule:: loaders
+	:members:
+
 
 
 Indices and tables
