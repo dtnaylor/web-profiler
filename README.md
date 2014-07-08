@@ -24,7 +24,7 @@ backends:
 * Chrome (`ChromeLoader` in `chrome_loader.py`)
 * Firefox (`FirefoxLoader` in `firefox_loader.py`)
 
-API documentation available [here](...).
+API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 	
 	
 ### Dependencies:
