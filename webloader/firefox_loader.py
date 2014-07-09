@@ -24,8 +24,8 @@ return timings;
 class FirefoxLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Firefox.
 
-    .. note:: The :class:`FirefoxLoader` does not extract HARs.
-    .. note:: The :class:`FirefoxLoader` does not save screenshots.
+    .. note:: The :class:`FirefoxLoader` currently does not extract HARs.
+    .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
     '''
 
     def __init__(self, **kwargs):

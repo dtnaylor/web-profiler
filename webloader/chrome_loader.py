@@ -21,7 +21,11 @@ DISPLAY = ':99'
 # TODO: FAILURE_NO_200?
 
 class ChromeLoader(Loader):
-    '''Subclass of :class:`Loader` that loads pages using Chrome.'''
+    '''Subclass of :class:`Loader` that loads pages using Chrome.
+    
+    .. note:: The :class:`ChromeLoader` currently does not time page load.
+    .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
+    '''
 
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)
