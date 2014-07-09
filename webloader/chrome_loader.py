@@ -24,7 +24,7 @@ class ChromeLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Chrome.
     
     .. note:: The :class:`ChromeLoader` currently does not time page load.
-    .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
+    .. note:: The :class:`ChromeLoader` currently does not save screenshots.
     '''
 
     def __init__(self, **kwargs):
