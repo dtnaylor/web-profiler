@@ -51,12 +51,11 @@ class LoadResult(object):
     '''
     
     # Status constants
-    #: Page load was successful
-    SUCCESS = 'SUCCESS'
-    FAILURE_TIMEOUT = 'FAILURE_TIMEOUT'
-    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN'
-    FAILURE_NO_200 = 'FAILURE_NO_200'
-    FAILURE_UNSET = 'FAILURE_UNSET'
+    SUCCESS = 'SUCCESS' #: Page load was successful
+    FAILURE_TIMEOUT = 'FAILURE_TIMEOUT' #: Page load timed out
+    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN' #: Unkown failure occurred
+    FAILURE_NO_200 = 'FAILURE_NO_200'  #: HTTP status code was not 200
+    FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, status, url, final_url=None, time=None, size=None,\
         har=None, img=None):
@@ -120,15 +119,11 @@ class PageResult(object):
     '''
     
     # Status constants
-    SUCCESS = 'SUCCESS'
-    '''All trials were successful'''
-
+    SUCCESS = 'SUCCESS' #: All trials were successful
     PARTIAL_SUCCESS = 'PARTIAL_SUCCESS' #: some trials were successful
-
-    #: The page could not be loaded with the specified protocol
-    FAILURE_NOT_ACCESSIBLE = 'FAILURE_NOT_ACCESSIBLE'
-    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN'
-    FAILURE_UNSET = 'FAILURE_UNSET'
+    FAILURE_NOT_ACCESSIBLE = 'FAILURE_NOT_ACCESSIBLE' #: The page could not be loaded with the specified protocol
+    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN' #: An unknown failure occurred
+    FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, url, status=None, load_results=None):
         self._status = PageResult.FAILURE_UNSET
@@ -158,12 +153,7 @@ class PageResult(object):
 
     @property
     def status(self):
-        '''The overall status across all trials.
-
-        SUCCESS: all trials were successful
-        PARTIAL_SUCCESS: some trials were successful
-        FAILURE_*: no trials were successful
-        '''
+        '''The overall status across all trials.'''
         return self._status
 
     @property
