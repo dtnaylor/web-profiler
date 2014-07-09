@@ -69,7 +69,7 @@ class PhantomJSLoader(Loader):
                 return LoadResult(LoadResult.SUCCESS,
                     url,
                     final_url=returnvals['final_url'],
-                    time=returnvals['time'],
+                    time=float(returnvals['time'])/1000.0,
                     har=harpath,
                     img=imagepath)
             else:

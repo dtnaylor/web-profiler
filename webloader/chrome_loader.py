@@ -52,7 +52,7 @@ class ChromeLoader(Loader):
         except Exception as e:
             logging.exception('Error loading %s: %s\n%s' % (url, e, traceback.format_exc()))
             return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
-        logging.getLogger(__name__).debug('Page loaded.')
+        logging.debug('Page loaded.')
     
         return LoadResult(LoadResult.SUCCESS, url, har=harpath)
 
@@ -68,7 +68,7 @@ class ChromeLoader(Loader):
         except Exception as e:
             logging.exception("Error starting XFVB")
             return False
-        logging.getLogger(__name__).debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
+        logging.debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
     
         # launch chrome with no cache and remote debug on
         try:
@@ -87,7 +87,7 @@ class ChromeLoader(Loader):
         except Exception as e:
             logging.exception("Error starting Chrome")
             return False
-        logging.getLogger(__name__).debug('Started Chrome')
+        logging.debug('Started Chrome')
         return True
 
 

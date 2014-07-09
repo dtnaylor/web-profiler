@@ -104,7 +104,7 @@ class LoadResult(object):
         return self._image_path
 
     def __str__(self):
-        return 'LoadResult (%s): %s' % (self.status,  pprint.saferepr(self.__dict__))
+        return 'LoadResult (%s): %s' % (self._status,  pprint.saferepr(self.__dict__))
 
     def __repr__(self):
         return self.__str__()
@@ -142,14 +142,14 @@ class PageResult(object):
                 else:
                     was_a_failure = True
             if was_a_failure and was_a_success:
-                self.status = PageResult.PARTIAL_SUCCESS
+                self._status = PageResult.PARTIAL_SUCCESS
             elif was_a_success:
-                self.status = PageResult.SUCCESS
+                self._status = PageResult.SUCCESS
             else:
-                self.status = PageResult.FAILURE_UNKNOWN
+                self._status = PageResult.FAILURE_UNKNOWN
 
         if status:
-            self.status = status
+            self._status = status
 
     @property
     def status(self):
@@ -187,7 +187,7 @@ class PageResult(object):
         return numpy.std(self.times)
     
     def __str__(self):
-        return 'PageResult (%s): %s' % (self.status,  pprint.saferepr(self.__dict__))
+        return 'PageResult (%s): %s' % (self._status,  pprint.saferepr(self.__dict__))
 
     def __repr__(self):
         return self.__str__()
