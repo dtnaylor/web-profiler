@@ -17,6 +17,9 @@ Loaders
 .. autoclass:: webloader.ChromeLoader
 	:members:
 
+.. autoclass:: webloader.FirefoxLoader
+	:members:
+
 
 Results
 -------
