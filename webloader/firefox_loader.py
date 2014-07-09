@@ -66,6 +66,9 @@ class FirefoxLoader(Loader):
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
             return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
+        except TimeoutException:
+            logging.exception('Timeout fetching %s', url)
+            return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
         except Exception as e:
             logging.exception('Error loading %s: %s' % (url, e))
             return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
