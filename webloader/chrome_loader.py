@@ -75,9 +75,14 @@ class ChromeLoader(Loader):
         chrome_proc = None
         try:
             # TODO: enable HTTP2
-            cache_options = '--disable-application-cache --disable-cache'
-            har_options = '--remote-debugging-port=9222 --enable-benchmarking --enable-net-benchmarking'
-            chrome_command = '%s %s %s' % (CHROME, cache_options, har_options)
+            options = ''
+            # caching options
+            if self._disable_cache:
+                options += ' --disable-application-cache --disable-cache'
+            # options for chrome-har-capturer
+            options += ' --remote-debugging-port=9222 --enable-benchmarking --enable-net-benchmarking'
+
+            chrome_command = '%s %s' % (CHROME, options)
             logging.debug('Starting Chrome: %s', chrome_command)
             self._chrome_proc = subprocess.Popen(chrome_command.split())
             sleep(5)

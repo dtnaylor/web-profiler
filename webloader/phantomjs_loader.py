@@ -9,6 +9,7 @@ PHANTOMJS = '/usr/bin/env phantomjs'
 PHANTOMLOADER = './phantomloader.js'
 
 # TODO: when do we return FAILURE_NO_200?
+# TODO: enable caching
 
 class PhantomJSLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using PhantomJS.'''
@@ -17,6 +18,8 @@ class PhantomJSLoader(Loader):
         super(PhantomJSLoader, self).__init__(**kwargs)
         if self._http2:
             raise NotImplementedError('PhantomJS does not support HTTP2')
+        if not self._disable_cache:
+            raise NotImplementedError('PhantomJS does not support caching')
         
         self._image_paths_by_url = defaultdict(list)
 
