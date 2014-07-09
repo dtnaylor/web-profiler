@@ -22,7 +22,7 @@ DISPLAY = ':99'
 # TODO: FAILURE_NO_200?
 
 class ChromeLoader(Loader):
-    '''Subclass of :class:`Loader` that loads pages using PhantomJS.'''
+    '''Subclass of :class:`Loader` that loads pages using Chrome.'''
 
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)

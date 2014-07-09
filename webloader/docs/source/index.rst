@@ -1,17 +1,30 @@
-.. Web Profiler documentation master file, created by
-   sphinx-quickstart on Tue Jul  8 17:09:00 2014.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to Web Profiler's documentation!
-========================================
-
-Contents:
+Web Loader
+==========
 
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: webloader
+
+Loaders
+-------
+
+.. autoclass:: webloader.Loader
+	:members:
+
+.. autoclass:: webloader.PhantomJSLoader
+	:members:
+
+.. autoclass:: webloader.ChromeLoader
+	:members:
+
+
+Results
+-------
+
+.. autoclass:: webloader.LoadResult
+	:members:
+
+.. autoclass:: webloader.PageResult
 	:members:
 
 
