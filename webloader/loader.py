@@ -9,6 +9,12 @@ import numpy
 from collections import defaultdict
 
 
+################################################################################
+#                                                                              #
+#   UTILITIES                                                                  #
+#                                                                              #
+################################################################################
+
 class TimeoutError(Exception):
     pass
 
@@ -26,18 +32,77 @@ class Timeout:
         signal.alarm(0)
 
 
+################################################################################
+#                                                                              #
+#   RESULTS                                                                    #
+#                                                                              #
+################################################################################
+
 class LoadResult(object):
-    '''Status and stats for a single URL *load*.'''
+    '''Status and stats for a single URL *load*.
+    
+    :param status: The status of the page load.
+    :param url: The original URL.
+    :param final_url: The final URL (maybe be different if we were redirected).
+    :param time: The page load time (in seconds).
+    :param size: ???
+    :param har: Path to the HAR file.
+    :param img: Path to a screenshot of the loaded page.
+    '''
+    
+    # Status constants
+    #: Page load was successful
+    SUCCESS = 'SUCCESS'
+    FAILURE_TIMEOUT = 'FAILURE_TIMEOUT'
+    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN'
+    FAILURE_NO_200 = 'FAILURE_NO_200'
+    FAILURE_UNSET = 'FAILURE_UNSET'
+
     def __init__(self, status, url, final_url=None, time=None, size=None,\
         har=None, img=None):
 
-        self.status = status
-        self.url = url  # the initial URL we requested
-        self.final_url = final_url  # we may have been redirected
-        self.time = time  # load time in seconds
-        self.size = size  # ??? all objects?
-        self.har_path = har
-        self.image_path = img
+        self._status = status
+        self._url = url  # the initial URL we requested
+        self._final_url = final_url  # we may have been redirected
+        self._time = time  # load time in seconds
+        self._size = size  # ??? all objects?
+        self._har_path = har
+        self._image_path = img
+
+    @property
+    def status(self):
+        '''The status of this page load.'''
+        return self._status
+
+    @property
+    def url(self):
+        '''The original URL requested.'''
+        return self._url
+
+    @property
+    def final_url(self):
+        '''The final URL (could be different if we were redirected).'''
+        return self._final_url
+
+    @property
+    def time(self):
+        '''The page load time in seconds.'''
+        return self._time
+
+    @property
+    def size(self):
+        '''???'''
+        return self._size
+
+    @property
+    def har_path(self):
+        '''Path to the HAR captured during this page load.'''
+        return self._har_path
+
+    @property
+    def image_path(self):
+        '''Path to a screenshot of the loaded page.'''
+        return self._image_path
 
     def __str__(self):
         return 'LoadResult (%s): %s' % (self.status,  pprint.saferepr(self.__dict__))
@@ -47,43 +112,84 @@ class LoadResult(object):
 
 
 class PageResult(object):
-    '''Status and stats for one URL (all trials).'''
+    '''Status and stats for one URL (all trials).
+    
+    :param url: The original URL.
+    :param status: The overall status of all trials.
+    :param load_results: List of individual :class:`LoadResult` objects
+    '''
+    
+    # Status constants
+    SUCCESS = 'SUCCESS'
+    PARTIAL_SUCCESS = 'PARTIAL_SUCCESS'
+    FAILURE_NOT_ACCESSIBLE = 'FAILURE_NOT_ACCESSIBLE'
+    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN'
+    FAILURE_UNSET = 'FAILURE_UNSET'
+
     def __init__(self, url, status=None, load_results=None):
-        self.status = Loader.FAILURE_UNSET
-        self.url = url
-        self.times = []
-        self.sizes = []
+        self._status = PageResult.FAILURE_UNSET
+        self._url = url
+        self._times = []
+        self._sizes = []
 
         if load_results:
             was_a_failure = False
             was_a_success = False
             for result in load_results:
-                if result.status == Loader.SUCCESS:
+                if result.status == PageResult.SUCCESS:
                     was_a_success = True
                     if result.time: self.times.append(result.time)
                     if result.size: self.sizes.append(result.size)
                 else:
                     was_a_failure = True
             if was_a_failure and was_a_success:
-                self.status = Loader.PARTIAL_SUCCESS
+                self.status = PageResult.PARTIAL_SUCCESS
             elif was_a_success:
-                self.status = Loader.SUCCESS
+                self.status = PageResult.SUCCESS
             else:
-                self.status = Loader.FAILURE_UNKNOWN
+                self.status = PageResult.FAILURE_UNKNOWN
 
         if status:
             self.status = status
+
+    @property
+    def status(self):
+        '''The overall status across all trials.
+
+        SUCCESS: all trials were successful
+        PARTIAL_SUCCESS: some trials were successful
+        FAILURE_*: no trials were successful
+        '''
+        return self._status
+
+    @property
+    def url(self):
+        '''The URL.'''
+        return self._url
+
+    @property
+    def times(self):
+        '''A list of the load times from individual trials.'''
+        return self._times
+
+    @property
+    def sizes(self):
+        '''A list of the page sizes from individual trials.'''
+        return self._sizes
     
     @property
     def mean_time(self):
+        '''Mean load time across all trials.'''
         return numpy.mean(self.times)
     
     @property
     def median_time(self):
+        '''Median load time across all trials.'''
         return numpy.median(self.times)
     
     @property
     def stddev_time(self):
+        '''Standard deviation of load time across all trials.'''
         return numpy.std(self.times)
     
     def __str__(self):
@@ -92,6 +198,13 @@ class PageResult(object):
     def __repr__(self):
         return self.__str__()
 
+
+
+################################################################################
+#                                                                              #
+#   LOADER                                                                     #
+#                                                                              #
+################################################################################
 
 class Loader(object):
     '''Superclass for URL loader. Subclasses implement actual page load
@@ -121,19 +234,6 @@ class Loader(object):
         # summarizes the LoadResults for the individual trials)
         self._page_results = {}
 
-    ##
-    ## Constants
-    ##
-    SUCCESS = 'SUCCESS'
-    PARTIAL_SUCCESS = 'PARTIAL_SUCCESS'
-    FAILURE_NOT_ACCESSIBLE = 'FAILURE_NOT_ACCESSIBLE'
-    FAILURE_TIMEOUT = 'FAILURE_TIMEOUT'
-    FAILURE_NO_HTTP = 'FAILURE_NO_HTTP'
-    FAILURE_NO_HTTPS = 'FAILURE_NO_HTTPS'
-    FAILURE_UNKNOWN = 'FAILURE_UNKNOWN'
-    FAILURE_NO_200 = 'FAILURE_NO_200'
-    FAILURE_ARITHMETIC = 'FAILURE_ARITHMETIC'
-    FAILURE_UNSET = 'FAILURE_UNSET'
     
 
 
@@ -205,7 +305,7 @@ class Loader(object):
     ##
     @property
     def urls(self):
-        '''Return a cummulative list of the URLs this instance has loaded
+        '''A cummulative list of the URLs this instance has loaded
         in the order they were loaded. Each trial is listed separately.'''
         return self._urls
 

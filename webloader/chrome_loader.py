@@ -19,9 +19,10 @@ DISPLAY = ':99'
 # TODO: screenshot?
 # TODO: final URL?
 # TODO: pass timeout to chrome?
+# TODO: FAILURE_NO_200?
 
 class ChromeLoader(Loader):
-    '''Subclass of Loader that loads pages using PhantomJS.'''
+    '''Subclass of :class:`Loader` that loads pages using PhantomJS.'''
 
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)
@@ -45,16 +46,16 @@ class ChromeLoader(Loader):
         
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
-            return LoadResult(Loader.FAILURE_TIMEOUT, url)
+            return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
         except subprocess.CalledProcessError as e:
             logging.exception('Error loading %s: %s\n%s\n%s' % (url, e, e.output, traceback.format_exc()))
-            return LoadResult(Loader.FAILURE_UNKNOWN, url)
+            return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
         except Exception as e:
             logging.exception('Error loading %s: %s\n%s' % (url, e, traceback.format_exc()))
-            return LoadResult(Loader.FAILURE_UNKNOWN, url)
+            return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
         logging.getLogger(__name__).debug('Page loaded.')
     
-        return LoadResult(Loader.SUCCESS, url, har=harpath)
+        return LoadResult(LoadResult.SUCCESS, url, har=harpath)
 
 
     def _setup(self):

@@ -8,8 +8,10 @@ from loader import Loader, LoadResult, Timeout, TimeoutError
 PHANTOMJS = '/usr/bin/env phantomjs'
 PHANTOMLOADER = './phantomloader.js'
 
+# TODO: when do we return FAILURE_NO_200?
+
 class PhantomJSLoader(Loader):
-    '''Subclass of Loader that loads pages using PhantomJS.'''
+    '''Subclass of :class:`Loader` that loads pages using PhantomJS.'''
 
     def __init__(self, **kwargs):
         super(PhantomJSLoader, self).__init__(**kwargs)
@@ -49,10 +51,10 @@ class PhantomJSLoader(Loader):
             if status == 'FAILURE':
                 if message == 'timeout':
                     logging.error('Timeout fetching %s', url)
-                    return LoadResult(Loader.FAILURE_TIMEOUT, url)
+                    return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
                 else:
                     logging.error('Error fetching %s: %s', url, message)
-                    return LoadResult(Loader.FAILURE_UNKNOWN, url)
+                    return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
             elif status == 'SUCCESS':
                 # Save the HAR
                 with open(harpath, 'w') as f:
@@ -61,7 +63,7 @@ class PhantomJSLoader(Loader):
 
                 # Report status and time
                 returnvals = {field.split('=')[0]: field.split('=')[1] for field in message.split(';')}
-                return LoadResult(Loader.SUCCESS,
+                return LoadResult(LoadResult.SUCCESS,
                     url,
                     final_url=returnvals['final_url'],
                     time=returnvals['time'],
@@ -69,15 +71,15 @@ class PhantomJSLoader(Loader):
                     img=imagepath)
             else:
                 logging.error('loadspeed.js returned unexpected output: %s', output)
-                return LoadResult(Loader.FAILURE_UNKNOWN, url)
+                return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
 
         # problem running PhantomJS
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
-            return LoadResult(Loader.FAILURE_TIMEOUT, url)
+            return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
         except subprocess.CalledProcessError as e:
             logging.exception('Error loading %s: %s\n%s\n%s' % (url, e, e.output, traceback.format_exc()))
-            return LoadResult(Loader.FAILURE_UNKNOWN, url)
+            return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
         except Exception as e:
             logging.exception('Error loading %s: %s\n%s' % (url, e, traceback.format_exc()))
-            return LoadResult(Loader.FAILURE_UNKNOWN, url)
+            return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
