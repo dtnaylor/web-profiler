@@ -6,27 +6,17 @@ import logging
 from time import sleep
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
-CHROME = '/usr/bin/env google-chrome'
-CHROME_HAR_CAPTURER = '/usr/bin/env chrome-har-capturer'
 XVFB = '/usr/bin/env Xvfb'
 DISPLAY = ':99'
 
-# TODO: document chrome-har-capturer
-# TODO: test if isntalled chrome can support HTTP2
-# TODO: pick different display if multiple instances are used at once
-# TODO: get load time
-# TODO: screenshot?
-# TODO: final URL?
-# TODO: pass timeout to chrome?
-# TODO: FAILURE_NO_200?
 
-class ChromeLoader(Loader):
-    '''Subclass of :class:`Loader` that loads pages using Chrome.'''
+class FirefoxLoader(Loader):
+    '''Subclass of :class:`Loader` that loads pages using Firefox.'''
 
     def __init__(self, **kwargs):
-        super(ChromeLoader, self).__init__(**kwargs)
+        super(FirefoxLoader, self).__init__(**kwargs)
         self._xvfb_proc = None
-        self._chrome_proc = None
+        self._firefox_proc = None
 
     def _load_page(self, url, outdir):
         # path for new HAR file
@@ -38,10 +28,10 @@ class ChromeLoader(Loader):
         # load the specified URL
         logging.info('Fetching page %s', url)
         try:
-            capturer_cmd = '%s -o %s %s' % (CHROME_HAR_CAPTURER, harpath, url)
-            logging.debug('Running capturer: %s', capturer_cmd)
+            firefox_cmd =  # TODO
+            logging.debug('Loading: %s', firefox_cmd)
             with Timeout(seconds=self._timeout+5):
-                subprocess.check_output(capturer_cmd.split())
+                subprocess.check_output(firefox_cmd.split())
         
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
@@ -70,27 +60,25 @@ class ChromeLoader(Loader):
             return False
         logging.getLogger(__name__).debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
     
-        # launch chrome with no cache and remote debug on
+        # launch firefox with no cache
         try:
             # TODO: enable HTTP2
-            cache_options = '--disable-application-cache --disable-cache'
-            har_options = '--remote-debugging-port=9222 --enable-benchmarking --enable-net-benchmarking'
-            chrome_command = '%s %s %s' % (CHROME, cache_options, har_options)
-            logging.debug('Starting Chrome: %s', chrome_command)
-            self._chrome_proc = subprocess.Popen(chrome_command.split())
+            firefox_command =  # TODO
+            logging.debug('Starting Chrome: %s', firefox_command)
+            self._firefox_proc = subprocess.Popen(firefox_command.split())
             sleep(5)
         except Exception as e:
-            logging.exception("Error starting Chrome")
+            logging.exception("Error starting Firefox")
             return False
-        logging.getLogger(__name__).debug('Started Chrome')
+        logging.getLogger(__name__).debug('Started Firefox')
         return True
 
 
     def _teardown(self):
-        if self._chrome_proc:
-            logging.debug('Stopping Chrome')
-            self._chrome_proc.kill()
-            self._chrome_proc.wait()
+        if self._firefox_proc:
+            logging.debug('Stopping Firefox')
+            self._firefox_proc.kill()
+            self._firefox_proc.wait()
         if self._xvfb_proc:
             logging.debug('Stopping XVFB')
             self._xvfb_proc.kill()
