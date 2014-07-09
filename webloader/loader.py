@@ -121,7 +121,11 @@ class PageResult(object):
     
     # Status constants
     SUCCESS = 'SUCCESS'
-    PARTIAL_SUCCESS = 'PARTIAL_SUCCESS'
+    '''All trials were successful'''
+
+    PARTIAL_SUCCESS = 'PARTIAL_SUCCESS' #: some trials were successful
+
+    #: The page could not be loaded with the specified protocol
     FAILURE_NOT_ACCESSIBLE = 'FAILURE_NOT_ACCESSIBLE'
     FAILURE_UNKNOWN = 'FAILURE_UNKNOWN'
     FAILURE_UNSET = 'FAILURE_UNSET'
