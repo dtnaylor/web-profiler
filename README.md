@@ -23,6 +23,8 @@ backends:
 * PhantomJS (`PhantomJSLoader` in `phantomjs_loader.py`)
 * Chrome (`ChromeLoader` in `chrome_loader.py`)
 * Firefox (`FirefoxLoader` in `firefox_loader.py`)
+* Python Requests (`PythonRequestsLoader` in `pythonrequests_loader.py`)
+* Curl (`CurlLoader` in `curl_loader.py`)
 
 API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 	
@@ -41,3 +43,8 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 	Needed by the `ChromeLoader`.
 
 	Set path to binary at top of `chrome_loader.py`.
+
+* [Python Requests](http://docs.python-requests.org)
+
+    Used to test the availability of sites of HTTP or HTTPS and by the 
+    `PythonRequestsLoader`.

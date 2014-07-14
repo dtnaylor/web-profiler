@@ -25,10 +25,14 @@ class ChromeLoader(Loader):
     
     .. note:: The :class:`ChromeLoader` currently does not time page load.
     .. note:: The :class:`ChromeLoader` currently does not save screenshots.
+    .. note:: The :class:`ChromeLoader` currently does not support single-object loading (i.e., it always loads the full page).
     '''
 
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)
+        if not self._full_page:
+            raise NotImplementedError('ChromeLoader does not support loading only an object')
+
         self._xvfb_proc = None
         self._chrome_proc = None
 

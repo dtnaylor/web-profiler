@@ -26,10 +26,14 @@ class FirefoxLoader(Loader):
 
     .. note:: The :class:`FirefoxLoader` currently does not extract HARs.
     .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
+    .. note:: The :class:`FirefoxLoader` currently does not support single-object loading (i.e., it always loads the full page).
     '''
 
     def __init__(self, **kwargs):
         super(FirefoxLoader, self).__init__(**kwargs)
+        if not self._full_page:
+            raise NotImplementedError('PhantomJSLoader does not support loading only an object')
+
         self._xvfb_proc = None
         self._firefox_proc = None
         self._profile_name = 'webloader'

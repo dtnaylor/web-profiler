@@ -20,6 +20,12 @@ Loaders
 .. autoclass:: webloader.FirefoxLoader
 	:members:
 
+.. autoclass:: webloader.PythonRequestsLoader
+	:members:
+
+.. autoclass:: webloader.CurlLoader
+	:members:
+
 
 Results
 -------

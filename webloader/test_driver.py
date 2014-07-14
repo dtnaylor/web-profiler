@@ -7,10 +7,16 @@ import argparse
 import pprint
 from phantomjs_loader import PhantomJSLoader
 from chrome_loader import ChromeLoader
+from firefox_loader import FirefoxLoader
+from pythonrequests_loader import PythonRequestsLoader
+from curl_loader import CurlLoader
 
 def main():
-    loader = ChromeLoader(num_trials=1)
-    loader.load_pages(['www.youtube.com', 'http://www.cnn.com', 'http://www.pnc.com'])
+    loader = CurlLoader(num_trials=1, full_page=False)
+    #loader = PythonRequestsLoader(num_trials=1)
+    #loader = FirefoxLoader(num_trials=1)
+    #loader = PhantomJSLoader(num_trials=5)
+    loader.load_pages(['http://www.cnn.com', 'http://www.youtube.com'])
     print loader.urls
     pprint.pprint(loader.load_results)
     pprint.pprint(loader.page_results)

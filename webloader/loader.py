@@ -211,16 +211,18 @@ class Loader(object):
     :param http2: use HTTP 2 (not all subclasses support this)
     :param timeout: timeout in seconds
     :param disable_cache: disable the local browser cache (RAM and disk)
+    :param full_page: load page's subresources and render; if False, only the object is fetched
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
-        disable_cache=True):
+        disable_cache=True, full_page=True):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
         self._http2 = http2
         self._timeout = timeout
         self._disable_cache = disable_cache
+        self._full_page = full_page
         
         # cummulative list of all URLs (one per trial)
         self._urls = []

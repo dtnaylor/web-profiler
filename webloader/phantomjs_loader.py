@@ -12,14 +12,21 @@ PHANTOMLOADER = './phantomloader.js'
 # TODO: enable caching
 
 class PhantomJSLoader(Loader):
-    '''Subclass of :class:`Loader` that loads pages using PhantomJS.'''
+    '''Subclass of :class:`Loader` that loads pages using PhantomJS.
+    
+    .. note:: The :class:`PhantomJSLoader` currently does not support HTTP2.
+    .. note:: The :class:`PhantomJSLoader` currently does not support caching.
+    .. note:: The :class:`PhantomJSLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    '''
 
     def __init__(self, **kwargs):
         super(PhantomJSLoader, self).__init__(**kwargs)
         if self._http2:
-            raise NotImplementedError('PhantomJS does not support HTTP2')
+            raise NotImplementedError('PhantomJSLoader does not support HTTP2')
         if not self._disable_cache:
-            raise NotImplementedError('PhantomJS does not support caching')
+            raise NotImplementedError('PhantomJSLoader does not support caching')
+        if not self._full_page:
+            raise NotImplementedError('PhantomJSLoader does not support loading only an object')
         
         self._image_paths_by_url = defaultdict(list)
 
