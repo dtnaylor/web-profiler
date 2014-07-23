@@ -92,9 +92,9 @@ class URLResult(object):
             self.status = FAILURE_ARITHMETIC
 
     def __str__(self):
-        return 'RESULT: < Status=%s\tHTTP/HTTPS Mean=%f/%f StdDev=%f/%f\tURL=%s >'\
+        return 'RESULT: < Status=%s\tHTTP/HTTPS Mean=%f/%f StdDev=%f/%f Median=%f/%f\tURL=%s >'\
             % (self.status, self.http_mean, self.https_mean, self.http_stddev,\
-            self.https_stddev, self.url)
+            self.https_stddev, self.http_median, self.https_median, self.url)
     def __repr__(self):
         return self.__str__()
 
