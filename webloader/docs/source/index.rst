@@ -8,32 +8,32 @@ Web Loader
 Loaders
 -------
 
-.. autoclass:: webloader.Loader
+.. autoclass:: webloader.loader.Loader
 	:members:
 
-.. autoclass:: webloader.PhantomJSLoader
+.. autoclass:: webloader.phantomjs_loader.PhantomJSLoader
 	:members:
 
-.. autoclass:: webloader.ChromeLoader
+.. autoclass:: webloader.chrome_loader.ChromeLoader
 	:members:
 
-.. autoclass:: webloader.FirefoxLoader
+.. autoclass:: webloader.firefox_loader.FirefoxLoader
 	:members:
 
-.. autoclass:: webloader.PythonRequestsLoader
+.. autoclass:: webloader.pythonrequests_loader.PythonRequestsLoader
 	:members:
 
-.. autoclass:: webloader.CurlLoader
+.. autoclass:: webloader.curl_loader.CurlLoader
 	:members:
 
 
 Results
 -------
 
-.. autoclass:: webloader.LoadResult
+.. autoclass:: webloader.loader.LoadResult
 	:members:
 
-.. autoclass:: webloader.PageResult
+.. autoclass:: webloader.loader.PageResult
 	:members:
 
 

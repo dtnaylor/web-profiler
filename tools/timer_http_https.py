@@ -12,11 +12,16 @@ import multiprocessing
 from collections import defaultdict
 
 sys.path.append('..')
-from webloader import PhantomJSLoader, PythonRequestsLoader, CurlLoader, PageResult
+from webloader.loader import PageResult
+from webloader.phantomjs_loader import PhantomJSLoader
+from webloader.curl_loader import CurlLoader
 
 # TODO: do something about this
-sys.path.append('/home/dnaylor/Documents/tools/myplot')
-import myplot
+try:
+    sys.path.append('/home/dnaylor/Documents/tools/myplot')
+    import myplot
+except ImportError:
+    pass
 
 SUCCESS = 'SUCCESS'
 FAILURE_TIMEOUT = 'FAILURE_TIMEOUT'

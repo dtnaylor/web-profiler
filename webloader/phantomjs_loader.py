@@ -6,7 +6,7 @@ from collections import defaultdict
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
 PHANTOMJS = '/usr/bin/env phantomjs'
-PHANTOMLOADER = './phantomloader.js'
+PHANTOMLOADER = os.path.join(os.path.dirname(__file__), 'phantomloader.js')
 
 # TODO: when do we return FAILURE_NO_200?
 # TODO: enable caching
