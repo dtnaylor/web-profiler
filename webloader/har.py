@@ -251,7 +251,7 @@ class Har(object):
             return None
 
     def _get_url(self):
-        return self.data['log']['pages'][0]['title']
+        return self.data['log']['pages'][0]['id']  # is this the 'title' field in browsermob or chrome?
     url = property(_get_url)
     
     def _get_base_url(self):
