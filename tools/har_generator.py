@@ -41,6 +41,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--outdir', default='.', help='Destination directory for HAR files.')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
+    parser.add_argument('-g', '--logfile', default=None, help='Path for log file.')
     args = parser.parse_args()
 
     if not os.path.isdir(args.outdir):
@@ -57,9 +58,12 @@ if __name__ == "__main__":
         level = logging.DEBUG
     else:
         level = logging.INFO
-    logging.basicConfig(
-        format = "%(levelname) -10s %(asctime)s %(module)s:%(lineno) -7s %(message)s",
-        level = level
-    )
+    config = {
+        'format' : "%(levelname) -10s %(asctime)s %(module)s:%(lineno) -7s %(message)s",
+        'level' : level
+    }
+    if args.logfile:
+        config['filename'] = args.logfile
+    logging.basicConfig(**config)
 
     main()
