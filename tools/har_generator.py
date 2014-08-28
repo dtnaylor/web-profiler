@@ -5,7 +5,7 @@ import sys
 import logging
 import argparse
 
-sys.path.append('..')
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from webloader.phantomjs_loader import PhantomJSLoader
 
 
