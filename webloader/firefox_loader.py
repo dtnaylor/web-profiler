@@ -20,6 +20,8 @@ var timings = performance.timing || {};
 return timings;
 '''
 
+# TODO: user agent
+
 
 class FirefoxLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Firefox.
@@ -27,12 +29,15 @@ class FirefoxLoader(Loader):
     .. note:: The :class:`FirefoxLoader` currently does not extract HARs.
     .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
     .. note:: The :class:`FirefoxLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`FirefoxLoader` currently does not support custom user agents.
     '''
 
     def __init__(self, **kwargs):
         super(FirefoxLoader, self).__init__(**kwargs)
         if not self._full_page:
-            raise NotImplementedError('PhantomJSLoader does not support loading only an object')
+            raise NotImplementedError('FirefoxLoader does not support loading only an object')
+        if self._user_agent:
+            raise NotImplementedError('FirefoxLoader does not support custom user agents.')
 
         self._xvfb_proc = None
         self._firefox_proc = None

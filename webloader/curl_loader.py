@@ -8,12 +8,15 @@ from loader import Loader, LoadResult, Timeout, TimeoutError
 
 CURL = '/usr/bin/env curl'
 
+# TODO: user agent
+
 class CurlLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using curl.
     
     .. note:: The :class:`CurlLoader` currently does not support HTTP2.
     .. note:: The :class:`CurlLoader` currently does not support caching.
-    .. note:: The :class:`PythonRequestsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
+    .. note:: The :class:`CurlLoader` currently does not support full page loading (i.e., fetching a page's subresources).
+    .. note:: The :class:`CurlLoader` currently does not support custom user agents.
     '''
 
     def __init__(self, **kwargs):
@@ -24,6 +27,8 @@ class CurlLoader(Loader):
             raise NotImplementedError('CurlLoader does not support caching')
         if self._full_page:
             raise NotImplementedError('CurlLoader does not support loading a full page')
+        if self._user_agent:
+            raise NotImplementedError('CurlLoader does not support custom user agents')
         
         self._image_paths_by_url = defaultdict(list)
 

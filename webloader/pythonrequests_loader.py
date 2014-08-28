@@ -6,13 +6,15 @@ import requests
 from collections import defaultdict
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
+#TODO: user agent
 
 class PythonRequestsLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Python requests.
     
-    .. note:: The :class:`PythonRequestLoader` currently does not support HTTP2.
-    .. note:: The :class:`PythonRequestLoader` currently does not support caching.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support HTTP2.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support caching.
     .. note:: The :class:`PythonRequestsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
+    .. note:: The :class:`PythonRequestsLoader` currently does not support custom user agents.
     '''
 
     def __init__(self, **kwargs):
@@ -23,6 +25,8 @@ class PythonRequestsLoader(Loader):
             raise NotImplementedError('PythonRequestsLoader does not support caching')
         if self._full_page:
             raise NotImplementedError('PythonRequestsLoader does not support loading full pages.')
+        if self._full_page:
+            raise NotImplementedError('PythonRequestsLoader does not support custom user agents.')
 
 
     def _load_page(self, url, outdir):

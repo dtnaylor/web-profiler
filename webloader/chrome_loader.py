@@ -19,6 +19,7 @@ DISPLAY = ':99'
 # TODO: final URL?
 # TODO: pass timeout to chrome?
 # TODO: FAILURE_NO_200?
+# TODO: user agent
 
 class ChromeLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Chrome.
@@ -26,12 +27,15 @@ class ChromeLoader(Loader):
     .. note:: The :class:`ChromeLoader` currently does not time page load.
     .. note:: The :class:`ChromeLoader` currently does not save screenshots.
     .. note:: The :class:`ChromeLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`ChromeLoader` currently does not support custom user agents.
     '''
 
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)
         if not self._full_page:
             raise NotImplementedError('ChromeLoader does not support loading only an object')
+        if self._full_page:
+            raise NotImplementedError('ChromeLoader does not support custom user agents.')
 
         self._xvfb_proc = None
         self._chrome_proc = None

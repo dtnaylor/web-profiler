@@ -10,6 +10,7 @@ PHANTOMLOADER = os.path.join(os.path.dirname(__file__), 'phantomloader.js')
 
 # TODO: when do we return FAILURE_NO_200?
 # TODO: enable caching
+# TODO: user agent
 
 class PhantomJSLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using PhantomJS.
@@ -17,6 +18,7 @@ class PhantomJSLoader(Loader):
     .. note:: The :class:`PhantomJSLoader` currently does not support HTTP2.
     .. note:: The :class:`PhantomJSLoader` currently does not support caching.
     .. note:: The :class:`PhantomJSLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`PhantomJSLoader` currently does not support custom user agents.
     '''
 
     def __init__(self, **kwargs):
@@ -27,6 +29,8 @@ class PhantomJSLoader(Loader):
             raise NotImplementedError('PhantomJSLoader does not support caching')
         if not self._full_page:
             raise NotImplementedError('PhantomJSLoader does not support loading only an object')
+        if self._user_agent:
+            raise NotImplementedError('PhantomJSLoader does not support custom user agents')
         
         self._image_paths_by_url = defaultdict(list)
 

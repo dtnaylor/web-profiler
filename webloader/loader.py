@@ -212,10 +212,11 @@ class Loader(object):
     :param timeout: timeout in seconds
     :param disable_cache: disable the local browser cache (RAM and disk)
     :param full_page: load page's subresources and render; if False, only the object is fetched
+    :param user_agent: use custom user agent; if None, use browser's default
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
-        disable_cache=True, full_page=True):
+        disable_cache=True, full_page=True, user_agent=None):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -223,6 +224,7 @@ class Loader(object):
         self._timeout = timeout
         self._disable_cache = disable_cache
         self._full_page = full_page
+        self._user_agent = user_agent
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
