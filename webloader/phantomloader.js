@@ -102,16 +102,15 @@ var page = require('webpage').create(),
 	url;
 
 
-if (system.args.length < 3) {
-  console.log('Usage: netsniff.js <some URL> <image path> [<timeout (sec)>]');
+if (system.args.length < 4) {
+  console.log('Usage: phantomloader.js <some URL> <image path> <timeout (sec)> [<user agent>]');
   phantom.exit(1);
-} else if (system.args.length === 4) {
-  timeout = parseFloat(system.args[3]);
-} else {
-  timeout = 10;
+} else if (system.args.length === 5) {
+  page.settings.userAgent = system.args[4];
 }
 
 url = system.args[1];
+timeout = parseFloat(system.args[3]);
 
 page.settings.resourceTimeout = 1000 * timeout;
 page.onResourceTimeout = function(e) {
