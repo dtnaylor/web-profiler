@@ -348,7 +348,7 @@ class Loader(object):
                     logging.info('%s is not accessible', url)
                     self._urls.append(url)
                     self._page_results[url] = PageResult(url,\
-                        status=Loader.FAILURE_NOT_ACCESSIBLE)
+                        status=PageResult.FAILURE_NOT_ACCESSIBLE)
                     continue
 
                 # If all is well, load URL num_trials times
