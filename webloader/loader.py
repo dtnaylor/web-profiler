@@ -200,8 +200,6 @@ class PageResult(object):
 #                                                                              #
 ################################################################################
 
-# TODO: user agent option
-
 class Loader(object):
     '''Superclass for URL loader. Subclasses implement actual page load
     functionality (e.g., using Chrome, PhantomJS, etc.).
@@ -210,19 +208,22 @@ class Loader(object):
     :param num_trials:  number of times to load each URL
     :param http2: use HTTP 2 (not all subclasses support this)
     :param timeout: timeout in seconds
-    :param disable_cache: disable the local browser cache (RAM and disk)
+    :param disable_local_cache: disable the local browser cache (RAM and disk)
+    :param disable_network_cache: send "Cache-Control: max-age=0" header
     :param full_page: load page's subresources and render; if False, only the object is fetched
     :param user_agent: use custom user agent; if None, use browser's default
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
-        disable_cache=True, full_page=True, user_agent=None):
+        disable_local_cache=True, disable_network_cache=False, full_page=True,\
+        user_agent=None):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
         self._http2 = http2
         self._timeout = timeout
-        self._disable_cache = disable_cache
+        self._disable_local_cache = disable_local_cache
+        self._disable_network_cache = disable_network_cache
         self._full_page = full_page
         self._user_agent = user_agent
         

@@ -1,6 +1,7 @@
 import os
 import logging
 import traceback
+import shlex
 import subprocess
 import string
 from collections import defaultdict
@@ -8,27 +9,22 @@ from loader import Loader, LoadResult, Timeout, TimeoutError
 
 CURL = '/usr/bin/env curl'
 
-# TODO: user agent
-
 class CurlLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using curl.
     
     .. note:: The :class:`CurlLoader` currently does not support HTTP2.
     .. note:: The :class:`CurlLoader` currently does not support caching.
     .. note:: The :class:`CurlLoader` currently does not support full page loading (i.e., fetching a page's subresources).
-    .. note:: The :class:`CurlLoader` currently does not support custom user agents.
     '''
 
     def __init__(self, **kwargs):
         super(CurlLoader, self).__init__(**kwargs)
         if self._http2:
             raise NotImplementedError('CurlLoader does not support HTTP2')
-        if not self._disable_cache:
-            raise NotImplementedError('CurlLoader does not support caching')
+        if not self._disable_local_cache:
+            raise NotImplementedError('CurlLoader does not support local caching')
         if self._full_page:
             raise NotImplementedError('CurlLoader does not support loading a full page')
-        if self._user_agent:
-            raise NotImplementedError('CurlLoader does not support custom user agents')
         
         self._image_paths_by_url = defaultdict(list)
 
@@ -45,12 +41,16 @@ class CurlLoader(Loader):
             curl_cmd += ' -o /dev/null'  # don't print file to stdout
             curl_cmd += ' -w http_code=%{http_code};final_url=%{url_effective};time=%{time_total};size=%{size_download}'   # format for stats at end
             curl_cmd += ' --connect-timeout %i' % self._timeout  # TCP connect timeout
+            if self._disable_network_cache:
+                curl_cmd += ' --header "Cache-Control: max-age=0"'  # disable network caches
+            if self._user_agent:
+                curl_cmd += ' --user-agent "%s"' % self._user_agent  # custom user agent
             curl_cmd += ' %s' % url
 
             # load the page
             logging.debug('Running curl: %s', curl_cmd)
             with Timeout(seconds=self._timeout+5):
-                output = subprocess.check_output(curl_cmd.split())
+                output = subprocess.check_output(shlex.split(curl_cmd))
                 logging.debug('curl returned: %s', output.strip())
 
             # curl returned, but may or may not have succeeded

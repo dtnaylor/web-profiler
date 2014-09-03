@@ -20,6 +20,7 @@ DISPLAY = ':99'
 # TODO: pass timeout to chrome?
 # TODO: FAILURE_NO_200?
 # TODO: user agent
+# TODO: Cache-Control header
 
 class ChromeLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Chrome.
@@ -28,14 +29,17 @@ class ChromeLoader(Loader):
     .. note:: The :class:`ChromeLoader` currently does not save screenshots.
     .. note:: The :class:`ChromeLoader` currently does not support single-object loading (i.e., it always loads the full page).
     .. note:: The :class:`ChromeLoader` currently does not support custom user agents.
+    .. note:: The :class:`ChromeLoader` currently does not support disabling network caches.
     '''
 
     def __init__(self, **kwargs):
         super(ChromeLoader, self).__init__(**kwargs)
         if not self._full_page:
             raise NotImplementedError('ChromeLoader does not support loading only an object')
-        if self._full_page:
+        if self._user_agent:
             raise NotImplementedError('ChromeLoader does not support custom user agents.')
+        if self._disable_network_cache:
+            raise NotImplementedError('ChromeLoader does not support disabling network caches.')
 
         self._xvfb_proc = None
         self._chrome_proc = None
@@ -77,6 +81,7 @@ class ChromeLoader(Loader):
             logging.debug('Starting XVFB: %s', xvfb_command)
             self._xvfb_proc = subprocess.Popen(xvfb_command.split())
             sleep(2)
+            # TODO: check return status (e.g., env could fail to find xvfb)
         except Exception as e:
             logging.exception("Error starting XFVB")
             return False
@@ -87,7 +92,7 @@ class ChromeLoader(Loader):
             # TODO: enable HTTP2
             options = ''
             # caching options
-            if self._disable_cache:
+            if self._disable_local_cache:
                 options += ' --disable-application-cache --disable-cache'
             # options for chrome-har-capturer
             options += ' --remote-debugging-port=9222 --enable-benchmarking --enable-net-benchmarking'
@@ -96,6 +101,7 @@ class ChromeLoader(Loader):
             logging.debug('Starting Chrome: %s', chrome_command)
             self._chrome_proc = subprocess.Popen(chrome_command.split())
             sleep(5)
+            # TODO: check return status (e.g., env could fail to find chrome)
         except Exception as e:
             logging.exception("Error starting Chrome")
             return False

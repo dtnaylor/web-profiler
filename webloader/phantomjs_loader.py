@@ -11,12 +11,14 @@ PHANTOMLOADER = os.path.join(os.path.dirname(__file__), 'phantomloader.js')
 # TODO: when do we return FAILURE_NO_200?
 # TODO: enable caching
 # TODO: user agent
+# TODO: disable network cache
 
 class PhantomJSLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using PhantomJS.
     
     .. note:: The :class:`PhantomJSLoader` currently does not support HTTP2.
-    .. note:: The :class:`PhantomJSLoader` currently does not support caching.
+    .. note:: The :class:`PhantomJSLoader` currently does not support local caching.
+    .. note:: The :class:`PhantomJSLoader` currently does not support disabling network caching.
     .. note:: The :class:`PhantomJSLoader` currently does not support single-object loading (i.e., it always loads the full page).
     '''
 
@@ -24,10 +26,12 @@ class PhantomJSLoader(Loader):
         super(PhantomJSLoader, self).__init__(**kwargs)
         if self._http2:
             raise NotImplementedError('PhantomJSLoader does not support HTTP2')
-        if not self._disable_cache:
-            raise NotImplementedError('PhantomJSLoader does not support caching')
+        if not self._disable_local_cache:
+            raise NotImplementedError('PhantomJSLoader does not support local caching')
         if not self._full_page:
             raise NotImplementedError('PhantomJSLoader does not support loading only an object')
+        if self._disable_network_cache:
+            raise NotImplementedError('PhantomJSLoader does not support disabling network caches.')
         
         self._image_paths_by_url = defaultdict(list)
 

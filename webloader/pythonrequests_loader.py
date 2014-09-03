@@ -7,12 +7,14 @@ from collections import defaultdict
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
 #TODO: user agent
+#TODO: disable network cache
 
 class PythonRequestsLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Python requests.
     
     .. note:: The :class:`PythonRequestsLoader` currently does not support HTTP2.
-    .. note:: The :class:`PythonRequestsLoader` currently does not support caching.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support local caching.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support disabling network caching.
     .. note:: The :class:`PythonRequestsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
     .. note:: The :class:`PythonRequestsLoader` currently does not support custom user agents.
     '''
@@ -21,8 +23,10 @@ class PythonRequestsLoader(Loader):
         super(PythonRequestsLoader, self).__init__(**kwargs)
         if self._http2:
             raise NotImplementedError('PythonRequestsLoader does not support HTTP2')
-        if not self._disable_cache:
-            raise NotImplementedError('PythonRequestsLoader does not support caching')
+        if not self._disable_local_cache:
+            raise NotImplementedError('PythonRequestsLoader does not support local caching')
+        if self._disable_network_cache:
+            raise NotImplementedError('PythonRequestsLoader does not support disabling network caching.')
         if self._full_page:
             raise NotImplementedError('PythonRequestsLoader does not support loading full pages.')
         if self._full_page:

@@ -21,6 +21,7 @@ return timings;
 '''
 
 # TODO: user agent
+# TODO: disable network cache (send header)
 
 
 class FirefoxLoader(Loader):
@@ -30,6 +31,7 @@ class FirefoxLoader(Loader):
     .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
     .. note:: The :class:`FirefoxLoader` currently does not support single-object loading (i.e., it always loads the full page).
     .. note:: The :class:`FirefoxLoader` currently does not support custom user agents.
+    .. note:: The :class:`FirefoxLoader` currently does not support disabling network caches.
     '''
 
     def __init__(self, **kwargs):
@@ -38,6 +40,8 @@ class FirefoxLoader(Loader):
             raise NotImplementedError('FirefoxLoader does not support loading only an object')
         if self._user_agent:
             raise NotImplementedError('FirefoxLoader does not support custom user agents.')
+        if self._disable_network_cache:
+            raise NotImplementedError('FirefoxLoader does not support disabling network caches.')
 
         self._xvfb_proc = None
         self._firefox_proc = None
@@ -127,7 +131,7 @@ class FirefoxLoader(Loader):
         #    userjs_path = os.path.join(self._profile_path, 'user.js')
         #    logging.debug('Writing user.js: %s' % userjs_path)
         #    with open(userjs_path, 'w') as f:
-        #        if self._disable_cache:
+        #        if self._disable_local_cache:
         #            f.write('user_pref("browser.cache.disk.enable", false);\n')
         #            f.write('user_pref("browser.cache.memory.enable", false);\n')
         #        # TODO: enable HTTP2
@@ -150,7 +154,7 @@ class FirefoxLoader(Loader):
         # prepare firefox selenium driver
         try:
             profile = webdriver.FirefoxProfile()
-            if self._disable_cache:
+            if self._disable_local_cache:
                 profile.set_preference("browser.cache.disk.enable", False)
                 profile.set_preference("browser.cache.memory.enable", False)
             # TODO: enable HTTP2
