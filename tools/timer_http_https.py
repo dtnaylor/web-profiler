@@ -139,11 +139,14 @@ def process_url(url):
     loader = None
     if args.loadpage:
         loader = PhantomJSLoader(outdir=args.outdir, num_trials=args.numtrials,\
+            disable_local_cache=True, disable_network_cache=True,\
             timeout=args.timeout, full_page=True)
     else:
         loader = CurlLoader(outdir=args.outdir, num_trials=args.numtrials,\
+            disable_local_cache=True, disable_network_cache=True,\
             timeout=args.timeout, full_page=False)
         #loader = PythonRequestsLoader(outdir=args.outdir, num_trials=args.numtrials,\
+        #    disable_local_cache=True, disable_network_cache=True,\
         #    timeout=args.timeout, full_page=False)
     
     # Load the pages; 
