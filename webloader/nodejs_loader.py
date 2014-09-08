@@ -8,7 +8,7 @@ from collections import defaultdict
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
 NODE = '/usr/bin/env node'
-NODEHTTP2 = '/home/kyle/github/node-http2/example/client.js'
+NODEHTTP2 = 'client.js'
 
 class NodeJsLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using NODE.JS.

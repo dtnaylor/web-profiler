@@ -52,6 +52,11 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 
 * [node-http2](https://github.com/molnarg/node-http2)
 
-    Needed by the `NodeJsLoader`. Location of the client.js file must be
-    hardcoded at the top of `nodejs_loader.py`.
+    Needed by the `NodeJsLoader`. Location of the module must be hardcoded 
+    in client.js.
+
+* [stream-length](https://github.com/jeffbski/length-stream)
+
+    Needed by the `NodeJsLoader`. Location of the module must be hardcoded 
+    in client.js.
 
