@@ -272,7 +272,9 @@ class Loader(object):
         response = None
         try:
             with Timeout(seconds = self._timeout+5):
-                response = requests.get(url, timeout=self._timeout)
+		'''Disabled verifying the certificate, we are only checking
+		here whether the connection is possible -Kyle'''
+                response = requests.get(url, timeout=self._timeout, verify=False) 
         except requests.exceptions.ConnectionError as e:
             logging.debug('Could not connect to %s: %s', url, e)
             return False
