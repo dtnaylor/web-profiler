@@ -25,6 +25,7 @@ backends:
 * Firefox (`FirefoxLoader` in `firefox_loader.py`)
 * Python Requests (`PythonRequestsLoader` in `pythonrequests_loader.py`)
 * Curl (`CurlLoader` in `curl_loader.py`)
+* NodeJS (`NodeJsLoader` in `nodejs_loader.py`)
 
 API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 	
@@ -48,3 +49,9 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 
     Used to test the availability of sites of HTTP or HTTPS and by the 
     `PythonRequestsLoader`.
+
+* [node-http2](https://github.com/molnarg/node-http2)
+
+    Needed by the `NodeJsLoader`. Location of the client.js file must be
+    hardcoded at the top of `nodejs_loader.py`.
+
