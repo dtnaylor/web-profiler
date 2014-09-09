@@ -23,7 +23,7 @@ var timings = performance.timing || {};
 return timings;
 '''
 
-# TODO: user agent
+# TODO: send firefox output to separate log file
 # TODO: disable network cache (send header)
 
 
@@ -33,7 +33,6 @@ class FirefoxLoader(Loader):
     .. note:: The :class:`FirefoxLoader` currently does not extract HARs.
     .. note:: The :class:`FirefoxLoader` currently does not save screenshots.
     .. note:: The :class:`FirefoxLoader` currently does not support single-object loading (i.e., it always loads the full page).
-    .. note:: The :class:`FirefoxLoader` currently does not support custom user agents.
     .. note:: The :class:`FirefoxLoader` currently does not support disabling network caches.
     '''
 
@@ -41,8 +40,6 @@ class FirefoxLoader(Loader):
         super(FirefoxLoader, self).__init__(**kwargs)
         if not self._full_page:
             raise NotImplementedError('FirefoxLoader does not support loading only an object')
-        if self._user_agent:
-            raise NotImplementedError('FirefoxLoader does not support custom user agents.')
         if self._disable_network_cache:
             raise NotImplementedError('FirefoxLoader does not support disabling network caches.')
 
@@ -93,6 +90,12 @@ class FirefoxLoader(Loader):
             logging.debug('Loading: %s', firefox_cmd)
             with Timeout(seconds=self._timeout+5):
                 subprocess.check_output(firefox_cmd.split())
+
+            # TODO: error checking
+            # TODO: try to get timing info, final URL, HAR, etc.
+            
+            logging.debug('Page loaded.')
+            return LoadResult(LoadResult.SUCCESS, url)
         
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
@@ -103,16 +106,10 @@ class FirefoxLoader(Loader):
         except Exception as e:
             logging.exception('Error loading %s: %s' % (url, e))
             return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
-        logging.debug('Page loaded.')
 
 
 
     def _load_page(self, url, outdir):
-        ## path for new HAR file
-        #safeurl = self._sanitize_url(url)
-        #filename = '%s.har' % (safeurl)
-        #harpath = os.path.join(outdir, filename)
-        #logging.debug('Will save HAR to %s', harpath)
 
         if self._selenium:
             return self._load_page_selenium(url, outdir)
@@ -131,7 +128,11 @@ class FirefoxLoader(Loader):
             if self._disable_local_cache:
                 profile.set_preference("browser.cache.disk.enable", False)
                 profile.set_preference("browser.cache.memory.enable", False)
-            # TODO: enable HTTP2
+            if self._http2:
+                # As of v34, this is enabled by default anyway
+                profile.set_preference("network.http.spdy.enabled.http2draft", True)
+            if self._user_agent:
+                profile.set_preference("general.useragent.override", '"%s"' % self._user_agent)
             self._selenium_driver = webdriver.Firefox(firefox_profile=profile)
         except Exception as e:
             logging.exception("Error making selenium driver")
@@ -156,7 +157,11 @@ class FirefoxLoader(Loader):
                 if self._disable_local_cache:
                     f.write('user_pref("browser.cache.disk.enable", false);\n')
                     f.write('user_pref("browser.cache.memory.enable", false);\n')
-                # TODO: enable HTTP2
+                if self._http2:
+                    # As of v34, this is enabled by default anyway
+                    f.write('user_pref("network.http.spdy.enabled.http2draft", true);\n')
+                if self._user_agent:
+                    f.write('user_pref("general.useragent.override", "%s");\n' % self._user_agent)
             f.closed
         except Exception as e:
             logging.exception("Error creating Firefox profile")
