@@ -38,6 +38,10 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 
 	If the loader can't find PhantomJS, try harding-coding the path to
 	PhantomJS at the top of `phantomjs_loader.py`.
+
+* [Xvfb](http://www.x.org/archive/X11R7.7/doc/man/man1/Xvfb.1.xhtml)
+
+	Needed to run Firefox or Chrome in headless mode.
 	
 * [chrome-har-capturer](https://github.com/cyrus-and/chrome-har-capturer)
 

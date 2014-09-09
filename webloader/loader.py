@@ -212,11 +212,12 @@ class Loader(object):
     :param disable_network_cache: send "Cache-Control: max-age=0" header
     :param full_page: load page's subresources and render; if False, only the object is fetched
     :param user_agent: use custom user agent; if None, use browser's default
+    :param headless: don't use GUI (if there normally is one -- e.g., browsers)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
-        user_agent=None):
+        user_agent=None, headless=True):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -226,6 +227,7 @@ class Loader(object):
         self._disable_network_cache = disable_network_cache
         self._full_page = full_page
         self._user_agent = user_agent
+        self._headless = headless
         
         # cummulative list of all URLs (one per trial)
         self._urls = []

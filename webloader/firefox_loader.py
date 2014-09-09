@@ -107,17 +107,18 @@ class FirefoxLoader(Loader):
 
 
     def _setup(self):
-        # start a virtual display
-        try:
-            os.environ['DISPLAY'] = DISPLAY
-            xvfb_command = '%s %s -screen 0 1366x768x24 -ac' % (XVFB, DISPLAY)
-            logging.debug('Starting XVFB: %s', xvfb_command)
-            self._xvfb_proc = subprocess.Popen(xvfb_command.split())
-            sleep(2)
-        except Exception as e:
-            logging.exception("Error starting XFVB")
-            return False
-        logging.debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
+        if self._headless:
+            # start a virtual display
+            try:
+                os.environ['DISPLAY'] = DISPLAY
+                xvfb_command = '%s %s -screen 0 1366x768x24 -ac' % (XVFB, DISPLAY)
+                logging.debug('Starting XVFB: %s', xvfb_command)
+                self._xvfb_proc = subprocess.Popen(xvfb_command.split())
+                sleep(2)
+            except Exception as e:
+                logging.exception("Error starting XFVB")
+                return False
+            logging.debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
 
         ## make firefox profile and set preferences
         #try:
