@@ -11,7 +11,6 @@ from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait # available since 2.4.0
 
-
 FIREFOX = '/usr/bin/env firefox' if platform.system() != 'Darwin' else\
     '/Applications/Firefox.app/Contents/MacOS/firefox'
 XVFB = '/usr/bin/env Xvfb'
@@ -131,6 +130,11 @@ class FirefoxLoader(Loader):
             if self._http2:
                 # As of v34, this is enabled by default anyway
                 profile.set_preference("network.http.spdy.enabled.http2draft", True)
+		# Attempt to always negotiate http/2.0
+		profile.set_preference("network.http.proxy.version", "2.0")
+		profile.set_preference("network.http.version", "2.0")
+		# Disable validation when using our testing server (since we don't own a valid cert)
+#		profile.set_preference("network.http.spdy.enforce-tls-profile", False)
             if self._user_agent:
                 profile.set_preference("general.useragent.override", '"%s"' % self._user_agent)
             self._selenium_driver = webdriver.Firefox(firefox_profile=profile)

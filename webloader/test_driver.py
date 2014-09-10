@@ -10,8 +10,10 @@ from chrome_loader import ChromeLoader
 from firefox_loader import FirefoxLoader
 from pythonrequests_loader import PythonRequestsLoader
 from curl_loader import CurlLoader
+from nodejs_loader import NodeJsLoader
 
 def main():
+    #loader = NodeJsLoader(num_trials=1, full_page=False, http2=True)
     #loader = CurlLoader(num_trials=1, full_page=False)
     #loader = PythonRequestsLoader(num_trials=1)
     loader = FirefoxLoader(num_trials=1, headless=False, selenium=False)

@@ -1,10 +1,10 @@
 var fs = require('fs');
 var path = require('path');
-var http2 = require('/home/kyle/github/node_modules/http2');
-var lengthStream = require('/home/kyle/github/node_modules/length-stream');
+var http2 = require('..');
+var lengthStream = require('../node_modules/length-stream');
 
 http2.globalAgent = new http2.Agent({
-  log: require('/home/kyle/github/node_modules/http2/test/util').createLogger('client')
+  log: require('../test/util').createLogger('client')
 });
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
