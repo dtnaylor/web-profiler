@@ -44,10 +44,10 @@ class ChromeLoader(Loader):
         self._xvfb_proc = None
         self._chrome_proc = None
 
-    def _load_page(self, url, outdir):
+    def _load_page(self, url, outdir, trial_num=-1):
         # path for new HAR file
         safeurl = self._sanitize_url(url)
-        filename = '%s.har' % (safeurl)
+        filename = '%s_trial%d.har' % (safeurl, trial_num)
         harpath = os.path.join(outdir, filename)
         logging.debug('Will save HAR to %s', harpath)
     

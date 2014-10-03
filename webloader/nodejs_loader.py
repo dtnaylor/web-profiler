@@ -32,7 +32,7 @@ class NodeJsLoader(Loader):
         self._image_paths_by_url = defaultdict(list)
 
 
-    def _load_page(self, url, outdir):
+    def _load_page(self, url, outdir, trial_num=-1):
     
         # load the specified URL
         logging.info('Loading page: %s', url)

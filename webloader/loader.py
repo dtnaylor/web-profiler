@@ -358,7 +358,7 @@ class Loader(object):
                 # If all is well, load URL num_trials times
                 for i in range(0, self._num_trials):
                     try:
-                        result = self._load_page(url, self._outdir)
+                        result = self._load_page(url, self._outdir, i)
                         self._urls.append(url)
                         self._load_results[url].append(result)
                         logging.debug(result)

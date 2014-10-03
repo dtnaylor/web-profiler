@@ -36,11 +36,11 @@ class PhantomJSLoader(Loader):
         self._image_paths_by_url = defaultdict(list)
 
 
-    def _load_page(self, url, outdir):
+    def _load_page(self, url, outdir, trial_num=-1):
         # path for new HAR file
         safeurl = self._sanitize_url(url)
-        filename = '%s.har' % (safeurl)
-        imagename = '%s.png' % (safeurl)
+        filename = '%s_trial%d.har' % (safeurl, trial_num)
+        imagename = '%s_trial%d.png' % (safeurl, trial_num)
         harpath = os.path.join(outdir, filename)
         imagepath = os.path.join(outdir, imagename)
         logging.debug('Will save HAR to %s', harpath)

@@ -27,7 +27,8 @@ def main():
 
     # load pages and save HARs
     if len(urls) > 0:
-        loader = PhantomJSLoader(outdir=args.outdir, user_agent=args.useragent)
+        loader = PhantomJSLoader(outdir=args.outdir, user_agent=args.useragent,\
+            num_trials=args.numtrials)
         loader.load_pages(urls)
 
 
@@ -39,6 +40,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--load_pages', nargs='+', help='URL(s) to load (to load multiple pages, separate URLs with spaces). A HAR will be generated for each page in outdir.')
     parser.add_argument('-f', '--url_file', default=None, help='Generate HARs for the URLs in the specified file (one URL per line)')
     parser.add_argument('-o', '--outdir', default='.', help='Destination directory for HAR files.')
+    parser.add_argument('-n', '--numtrials', default=1, type=int, help='Number of times to load each URL.')
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')

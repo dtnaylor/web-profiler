@@ -108,7 +108,7 @@ class FirefoxLoader(Loader):
 
 
 
-    def _load_page(self, url, outdir):
+    def _load_page(self, url, outdir, trial_num=-1):
 
         if self._selenium:
             return self._load_page_selenium(url, outdir)
