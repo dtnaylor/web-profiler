@@ -96,7 +96,7 @@ def fetch_url(url, proxy):
   subprocess.call('rm -r ~/.cache/mozilla/firefox/*.nightly/*')
 
   try:
-    cmd = TSHARK_CAP % (args.interface, filename, '4567' if proxy else '443')
+    cmd = TSHARK_CAP % (args.interface, filename, args.proxy_port if proxy else '443')
     logging.debug(cmd)
     tcpdump_proc = subprocess.Popen(cmd, shell=True)
   except Exception as e:
@@ -125,6 +125,16 @@ def fetch_url(url, proxy):
 
   return trial_hash, filename
 
+def setDNSServer(use_proxy):
+  if use_proxy:
+	# Turn off dnsmasq, turn on DNS faker
+	subprocess.call('sudo service dnsmasq stop')
+	subprocess.call('./dns_faker.py '+args.proxy_ip+' &')
+  else:
+	# Turn off DNS faker, turn on dnsmasq
+	subprocess.call('killall dns_faker.py')
+	subprocess.call('sudo service dnsmasq start')
+
 def main():
 
     filename_to_results = {}
@@ -149,17 +159,21 @@ def main():
 	    results[url] = URLResult(url)
 
 	for i in range(args.numtrials):
-	  # Set DNS server
-	  for url in args.urls:
-	    trial_hash, pcap_file = fetch_url(url, True)
-	    if trial_hash != None:
-		results[url].add_trial(Trial(trial_hash, pcap_file, True))
+	  # With Proxy
+	  use_proxy = True
 
-	  # Revert DNS server
-	  for url in args.urls:
-	    trial_hash, pcap_file = fetch_url(url, False)
-	    if trial_hash != None:
-		results[url].add_trial(Trial(trial_hash, pcap_file, False))
+	  for _ in range(2):
+	    # Set DNS server
+	    setDNSServer(use_proxy)
+
+	    for url in args.urls:
+	      trial_hash, pcap_file = fetch_url(url, use_proxy)
+	      if trial_hash != None:
+		  results[url].add_trial(Trial(trial_hash, pcap_file, use_proxy))
+
+	    # Without Proxy
+	    use_proxy = False
+
 
 	  while True:
     	    filename = os.path.join(args.outdir,'round.'+id_generator()+'.result')
@@ -187,6 +201,8 @@ if __name__ == "__main__":
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
     args = parser.parse_args()
+    args.proxy_ip = args.proxy.split(':')[0]
+    args.proxy_port = args.proxy.split(':')[1]
     
     if not os.path.isdir(args.outdir):
         try:
