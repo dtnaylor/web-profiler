@@ -57,16 +57,16 @@ class ChromeLoader(Loader):
             capturer_cmd = '%s -o %s %s' % (CHROME_HAR_CAPTURER, harpath, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
-                subprocess.check_output(capturer_cmd.split())
+                subprocess.check_output(capturer_cmd.split(), stderr=subprocess.STDOUT)
         
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
             return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
         except subprocess.CalledProcessError as e:
-            logging.exception('Error loading %s: %s\n%s\n%s' % (url, e, e.output, traceback.format_exc()))
+            logging.exception('Error loading %s: %s\n%s' % (url, e, e.output))
             return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
         except Exception as e:
-            logging.exception('Error loading %s: %s\n%s' % (url, e, traceback.format_exc()))
+            logging.exception('Error loading %s: %s' % (url, e))
             return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
         logging.debug('Page loaded.')
     
