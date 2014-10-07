@@ -213,11 +213,12 @@ class Loader(object):
     :param full_page: load page's subresources and render; if False, only the object is fetched
     :param user_agent: use custom user agent; if None, use browser's default
     :param headless: don't use GUI (if there normally is one -- e.g., browsers)
+    :param restart_on_fail: if a load fails, set up the loader again (e.g., reboot chrome)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
-        user_agent=None, headless=True, proxy=None):
+        user_agent=None, headless=True, restart_on_fail=False, proxy=None):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -228,6 +229,7 @@ class Loader(object):
         self._full_page = full_page
         self._user_agent = user_agent
         self._headless = headless
+        self._restart_on_fail = restart_on_fail
 	self._proxy = proxy
         
         # cummulative list of all URLs (one per trial)
@@ -363,6 +365,10 @@ class Loader(object):
                         self._urls.append(url)
                         self._load_results[url].append(result)
                         logging.debug(result)
+
+                        if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
+                            self._teardown()
+                            self._setup()
                     except Exception as e:
                         logging.exception('Error loading page %s: %s\n%s', url, e,\
                             traceback.format_exc())
