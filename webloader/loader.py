@@ -217,7 +217,7 @@ class Loader(object):
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
-        user_agent=None, headless=True):
+        user_agent=None, headless=True, proxy=None):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -228,6 +228,7 @@ class Loader(object):
         self._full_page = full_page
         self._user_agent = user_agent
         self._headless = headless
+	self._proxy = proxy
         
         # cummulative list of all URLs (one per trial)
         self._urls = []

@@ -1,20 +1,27 @@
 #!/usr/bin/env python
 import os
 import sys
+import string
 import logging
 import argparse
 import urlparse
+import random
 import numpy
 import pprint
 import cPickle
+import time
+import signal
 import subprocess
-import multiprocessing
 from collections import defaultdict
 from datetime import datetime
 
+sys.path.append('..')
+from webloader.zombiejs_loader import ZombieJSLoader
+from webloader.loader import LoadResult
+
 TSHARK_STAT = 'tshark -q -z io,stat,0.001 -r %s'
 TSHARK_CAP = 'tshark -i %s -w %s port %s'
-FIREFOX_CMD = '/home/b.kyle/Downloads/firefox-35.0a1/firefox -P nightly -no-remote "%s"'
+#FIREFOX_CMD = '/home/b.kyle/Downloads/firefox-35.0a1/firefox -P nightly -no-remote "%s"'
 
 class Trial(object):
   def __init__(self, trial_hash, pcap_filename, use_proxy):
@@ -36,34 +43,6 @@ class URLResult(object):
 	else:
 		self.noproxy_trials.append(trial)
 
-    def _get_http_mean(self):
-        return numpy.mean(self.http_times)
-    http_mean = property(_get_http_mean)
-    
-    def _get_http_median(self):
-        return numpy.median(self.http_times)
-    http_median = property(_get_http_median)
-
-    def _get_http_stddev(self):
-        return numpy.std(self.http_times)
-    http_stddev = property(_get_http_stddev)
-    
-    def _get_https_mean(self):
-        return numpy.mean(self.https_times)
-    https_mean = property(_get_https_mean)
-    
-    def _get_https_median(self):
-        return numpy.median(self.https_times)
-    https_median = property(_get_https_median)
-
-    def _get_https_stddev(self):
-        return numpy.std(self.https_times)
-    https_stddev = property(_get_https_stddev)
-
-    def _get_size(self):
-        return self.http_sizes[0] if len(self.http_sizes) > 0 else None
-    size = property(_get_size)
-
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
     if '://' not in url:
@@ -81,19 +60,24 @@ def make_url(url, protocol, port=None):
 
     return urlparse.urlunparse(new_comps)
 
-def id_generator(size=10, chars=string.ascii_uppercase + string.digits):
+def id_generator(size=15, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 def fetch_url(url, proxy):
+  url = make_url(url, 'https')
+
   while True:
     trial_hash = id_generator()
-    filename = args.outdir+'/'+trial_hash+'.pcap'
+    filename = os.path.join(args.outdir,trial_hash+'.pcap')
     if not os.path.isfile(filename):
 	break
 
   # Clear cache
-  subprocess.call('rm ~/.mozilla/firefox/*.nightly/*.sqlite ~/.mozilla/firefox/*nightly/sessionstore.js')
-  subprocess.call('rm -r ~/.cache/mozilla/firefox/*.nightly/*')
+  #try:
+  #  subprocess.call('rm /home/b.kyle/.mozilla/firefox/*.nightly/*.sqlite /home/b.kyle/.mozilla/firefox/*nightly/sessionstore.js')
+  #  subprocess.call('rm -r /home/b.kyle/.cache/mozilla/firefox/*.nightly/*')
+  #except Exception as e:
+  #  logging.error('Error clearing cache. (%s)', e)
 
   try:
     cmd = TSHARK_CAP % (args.interface, filename, args.proxy_port if proxy else '443')
@@ -104,36 +88,27 @@ def fetch_url(url, proxy):
     time.sleep(5)
     return None, None
 
-  try:
-    cmd = FIREFOX_CMD % url
-    logging.debug(cmd)
-    firefox_proc = subprocess.Popen(cmd, shell=True)
-    time.sleep(15) # Give Firefox 15 seconds to load the webpage, otherwise, give up
-  except Exception as e:
-    logging.error('Error starting firefox. Skipping this trial. (%s)', e)
-    time.sleep(5)
+  loader = ZombieJSLoader(outdir=args.outdir, num_trials=1,\
+    	disable_local_cache=True, http2=True,\
+    	timeout=args.timeout, full_page=True, proxy= args.proxy if proxy else None)
+  result = loader._load_page(url, args.outdir)
+
+  if tcpdump_proc:
+    logging.debug('Stopping tcpdump')
+    tcpdump_proc.terminate()
+    tcpdump_proc.wait()
+    # Make sure its dead
+    try:
+      subprocess.check_output(['killall','tshark'])
+    except:
+      pass
+
+  time.sleep(1)
+  if result.status != LoadResult.SUCCESS:
+    os.remove(filename)
     return None, None
-  finally:
-    if tcpdump_proc:
-      logging.debug('Stopping tcpdump')
-      tcpdump_proc.kill()
-      tcpdump_proc.wait()
-    if firefox_proc:
-      logging.debug('Stopping firefox')
-      firefox_proc.kill()
-      firefox_proc.wait()
-
-  return trial_hash, filename
-
-def setDNSServer(use_proxy):
-  if use_proxy:
-	# Turn off dnsmasq, turn on DNS faker
-	subprocess.call('sudo service dnsmasq stop')
-	subprocess.call('./dns_faker.py '+args.proxy_ip+' &')
   else:
-	# Turn off DNS faker, turn on dnsmasq
-	subprocess.call('killall dns_faker.py')
-	subprocess.call('sudo service dnsmasq start')
+    return trial_hash, filename
 
 def main():
 
@@ -159,21 +134,22 @@ def main():
 	    results[url] = URLResult(url)
 
 	for i in range(args.numtrials):
+	  at_least_1_success = False
 	  # With Proxy
 	  use_proxy = True
 
-	  for _ in range(2):
-	    # Set DNS server
-	    setDNSServer(use_proxy)
-
+	  for _ in range(2):   
 	    for url in args.urls:
 	      trial_hash, pcap_file = fetch_url(url, use_proxy)
 	      if trial_hash != None:
 		  results[url].add_trial(Trial(trial_hash, pcap_file, use_proxy))
+		  at_least_1_success = True
 
 	    # Without Proxy
 	    use_proxy = False
 
+          if not at_least_1_success:
+	    continue
 
 	  while True:
     	    filename = os.path.join(args.outdir,'round.'+id_generator()+'.result')
@@ -182,6 +158,8 @@ def main():
           with open(filename, 'w') as f:
             cPickle.dump(results, f)
 	    results = {}
+	    for url in args.urls:
+	      results[url] = URLResult(url)
 
 
 if __name__ == "__main__":
@@ -193,11 +171,10 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--numtrials', type=int, default=20, help='How many times to fetch each URL with each protocol')
     parser.add_argument('-t', '--timeout', type=int, default=10, help='Timeout for requests, in seconds')
     parser.add_argument('-i', '--interface', default='eth0', help='Interface to use')
-    parser.add_argument('-p', '--process', default='.', help='Do not perform page fetch, reprocess files')
+    parser.add_argument('-p', '--process', action='store_true', default=False, help='Do not perform page fetch, reprocess files')
     parser.add_argument('-x', '--proxy', default='mplane.pdi.tid.es:4567', help='Proxy to use in experiments')
     parser.add_argument('-g', '--tag', help='Tag to prepend to output files')
     parser.add_argument('-o', '--outdir', default='.', help='Output directory')
-    parser.add_argument('-c', '--numcores', type=int, help='Number of cores to use')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
     args = parser.parse_args()
