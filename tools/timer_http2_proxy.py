@@ -12,6 +12,7 @@ import cPickle
 import time
 import signal
 import subprocess
+import glob
 from collections import defaultdict
 from datetime import datetime
 
@@ -23,12 +24,20 @@ TSHARK_STAT = 'tshark -q -z io,stat,0.001 -r %s'
 TSHARK_CAP = 'tshark -i %s -w %s port %s'
 #FIREFOX_CMD = '/home/b.kyle/Downloads/firefox-35.0a1/firefox -P nightly -no-remote "%s"'
 
+HTTP_METHODS = ['GET', 'PUT', 'OPTIONS', 'HEAD', 'POST', 'DELETE', 'TRACE', 'CONNECT']
+
 class Trial(object):
   def __init__(self, trial_hash, directory, use_proxy):
 	self.directory = directory
 	self.trial_hash = trial_hash
 	self.use_proxy = use_proxy
 	self.time = datetime.now()
+
+  def getPcapFile(self):
+	return os.path.join(self.directory, self.trial_hash+'.pcap')
+
+  def getOutput(self):
+	return os.path.join(self.directory, self.trial_hash+'.output')
 
 class URLResult(object):
     '''Statistics of a single URL'''
@@ -42,6 +51,12 @@ class URLResult(object):
 		self.proxy_trials.append(trial)
 	else:
 		self.noproxy_trials.append(trial)
+
+    def add_to_results(self, results):
+	for trial in self.proxy_trials:
+		results.add_trial(trial)
+	for trial in self.noproxy_trials:
+		results.add_trial(trial)
 
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
@@ -87,7 +102,7 @@ def fetch_url(url, proxy):
   except Exception as e:
     logging.error('Error starting tshark. Skipping this trial. (%s)', e)
     time.sleep(5)
-    return None, None
+    return None
 
   loader = ZombieJSLoader(outdir=args.outdir, num_trials=1,\
     	disable_local_cache=True, http2=True,\
@@ -113,17 +128,38 @@ def fetch_url(url, proxy):
 	outf.write(result.raw)
     return trial_hash
 
+def process_results(results):
+  for url, result in results.iteritems():
+    for trial in result.proxy_trials:	
+      try:
+	out = [-1, 0]
+        with open(trial.getOutput(), "r") as f:
+	  for line in f:
+	    chunks = line.rstrip().split()
+	    if len(chunks) > 0 and chunks[0] in HTTP_METHODS:
+	      value = int(chunks[-1].rstrip('ms')
+	      if chunks[1] == url:
+		out[0] = value
+	      else:
+		out[1] += value
+	print url, out[0], out[1]
+      except Exception as e:
+	logging.error('Error processing trial output. Skipping. (%s)', e)
+
 def main():
 
-    filename_to_results = {}
-    filenames = []  # so we know the original order
     if args.process:
-        for file in args.readfile:
-            with open(file, 'r') as f:
-                results = cPickle.load(f)
-                filename_to_results[file] = results
-                filenames.append(file)
-            f.closed
+        result_files = glob.glob(os.path.join(args.outdir, 'round.*.result'))
+	results = {}
+        for result_file in result_files:
+            with open(result_file, 'r') as f:
+                res = cPickle.load(f)
+		for url in res:
+			if url not in results:
+				results[url] = res[url]
+			else:
+				res[url].add_to_results(results[url])
+	process_results(results)
     else:
         if args.urlfile:
             with open(args.urlfile, 'r') as f:
