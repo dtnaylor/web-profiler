@@ -58,7 +58,7 @@ class LoadResult(object):
     FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, status, url, final_url=None, time=None, size=None,\
-        har=None, img=None):
+        har=None, img=None, raw=None):
 
         self._status = status
         self._url = url  # the initial URL we requested
@@ -67,6 +67,7 @@ class LoadResult(object):
         self._size = size  # ??? all objects?
         self._har_path = har
         self._image_path = img
+	self._raw = raw
 
     @property
     def status(self):
@@ -102,6 +103,11 @@ class LoadResult(object):
     def image_path(self):
         '''Path to a screenshot of the loaded page.'''
         return self._image_path
+
+    @property
+    def raw(self):
+        '''Raw output from the underlying command.'''
+        return self._raw
 
     def __str__(self):
         return 'LoadResult (%s): %s' % (self._status,  pprint.saferepr(self.__dict__))

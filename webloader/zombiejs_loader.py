@@ -47,7 +47,7 @@ class ZombieJSLoader(Loader):
             with Timeout(seconds=self._timeout+5):
                 output = subprocess.check_output(Zombie_cmd)
 
-            return LoadResult(LoadResult.SUCCESS, url)
+            return LoadResult(LoadResult.SUCCESS, url, raw=output)
 
         # problem running ZombieJS
         except TimeoutError:

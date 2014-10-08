@@ -24,8 +24,8 @@ TSHARK_CAP = 'tshark -i %s -w %s port %s'
 #FIREFOX_CMD = '/home/b.kyle/Downloads/firefox-35.0a1/firefox -P nightly -no-remote "%s"'
 
 class Trial(object):
-  def __init__(self, trial_hash, pcap_filename, use_proxy):
-	self.root, ext = os.path.splitext(pcap_filename)
+  def __init__(self, trial_hash, directory, use_proxy):
+	self.directory = directory
 	self.trial_hash = trial_hash
 	self.use_proxy = use_proxy
 	self.time = datetime.now()
@@ -71,6 +71,7 @@ def fetch_url(url, proxy):
     filename = os.path.join(args.outdir,trial_hash+'.pcap')
     if not os.path.isfile(filename):
 	break
+  output_file = os.path.join(args.outdir,trial_hash+'.output')
 
   # Clear cache
   #try:
@@ -106,9 +107,11 @@ def fetch_url(url, proxy):
   time.sleep(1)
   if result.status != LoadResult.SUCCESS:
     os.remove(filename)
-    return None, None
+    return None
   else:
-    return trial_hash, filename
+    with open(output_file, "w") as outf:
+	outf.write(result.raw)
+    return trial_hash
 
 def main():
 
@@ -125,7 +128,7 @@ def main():
         if args.urlfile:
             with open(args.urlfile, 'r') as f:
                 for line in f:
-                    args.urls.append(line.strip())
+                    args.urls.append(line.strip().split()[0])
             f.closed
         
 	# Create results dictionary
@@ -140,9 +143,9 @@ def main():
 
 	  for _ in range(2):   
 	    for url in args.urls:
-	      trial_hash, pcap_file = fetch_url(url, use_proxy)
+	      trial_hash = fetch_url(url, use_proxy)
 	      if trial_hash != None:
-		  results[url].add_trial(Trial(trial_hash, pcap_file, use_proxy))
+		  results[url].add_trial(Trial(trial_hash, args.outdir, use_proxy))
 		  at_least_1_success = True
 
 	    # Without Proxy
