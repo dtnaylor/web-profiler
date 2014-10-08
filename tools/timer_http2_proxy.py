@@ -142,7 +142,22 @@ def process_results(results):
 		out[0] = value
 	      else:
 		out[1] += value
-	print url, out[0], out[1]
+	print url, 'YESPROXY', out[0], out[1]
+      except Exception as e:
+	logging.error('Error processing trial output. Skipping. (%s)', e)
+    for trial in result.noproxy_trials:	
+      try:
+	out = [-1, 0]
+        with open(trial.getOutput(), "r") as f:
+	  for line in f:
+	    chunks = line.rstrip().split()
+	    if len(chunks) > 0 and chunks[0] in HTTP_METHODS:
+	      value = int(chunks[-1].rstrip('ms')
+	      if chunks[1] == url:
+		out[0] = value
+	      else:
+		out[1] += value
+	print url, 'NOPROXY', out[0], out[1]
       except Exception as e:
 	logging.error('Error processing trial output. Skipping. (%s)', e)
 
