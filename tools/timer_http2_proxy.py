@@ -136,30 +136,30 @@ def process_results(results):
         with open(trial.getOutput(), "r") as f:
 	  for line in f:
 	    chunks = line.rstrip().split()
-	    if len(chunks) > 0 and chunks[0] in HTTP_METHODS:
-	      value = int(chunks[-1].rstrip('ms')
-	      if chunks[1] == url:
+	    if len(chunks) > 2 and chunks[0] in HTTP_METHODS:
+	      value = int(chunks[-1].rstrip('ms'))
+	      if chunks[1].rstrip('/') == url:
 		out[0] = value
 	      else:
 		out[1] += value
 	print url, 'YESPROXY', out[0], out[1]
       except Exception as e:
-	logging.error('Error processing trial output. Skipping. (%s)', e)
+	logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', trial.getOutput(), line, e)
     for trial in result.noproxy_trials:	
       try:
 	out = [-1, 0]
         with open(trial.getOutput(), "r") as f:
 	  for line in f:
 	    chunks = line.rstrip().split()
-	    if len(chunks) > 0 and chunks[0] in HTTP_METHODS:
-	      value = int(chunks[-1].rstrip('ms')
-	      if chunks[1] == url:
+	    if len(chunks) > 2 and chunks[0] in HTTP_METHODS:
+	      value = int(chunks[-1].rstrip('ms'))
+	      if chunks[1].rstrip('/') == url:
 		out[0] = value
 	      else:
 		out[1] += value
 	print url, 'NOPROXY', out[0], out[1]
       except Exception as e:
-	logging.error('Error processing trial output. Skipping. (%s)', e)
+	logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', trial.getOutput(), line, e)
 
 def main():
 
@@ -192,6 +192,7 @@ def main():
 	  # With Proxy
 	  use_proxy = True
 
+	  random.shuffle(args.urls)
 	  for _ in range(2):   
 	    for url in args.urls:
 	      trial_hash = fetch_url(url, use_proxy)
