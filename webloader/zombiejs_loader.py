@@ -37,11 +37,12 @@ class ZombieJSLoader(Loader):
     def _load_page(self, url, outdir, trial_num=-1):    
         # load the specified URL
         logging.info('Loading page: %s', url)
-        try:
+        try:	    
 	    # Cause a restart of the proxy
-	    conn = httplib.HTTPConnection(self._proxy.split(':')[0]+':5678') # Assume restart always listens on this port for now
-	    conn.request("GET", "/")
-	    resp = conn.getresponse() # Don't need to do anything with it. Just want to know that the request was acknowledge
+	    if self._proxy:
+	    	conn = httplib.HTTPConnection(self._proxy.split(':')[0]+':5678') # Assume restart always listens on this port for now
+	    	conn.request("GET", "/")
+	    	resp = conn.getresponse() # Don't need to do anything with it. Just want to know that the request was acknowledge
 
             # Load the page
             Zombie_cmd = [ENV, ZombieJS, ZombieLOADER, url, str(self._timeout)]
