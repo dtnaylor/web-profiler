@@ -2,6 +2,7 @@ import os
 import logging
 import traceback
 import subprocess
+import httplib
 from collections import defaultdict
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
@@ -37,6 +38,11 @@ class ZombieJSLoader(Loader):
         # load the specified URL
         logging.info('Loading page: %s', url)
         try:
+	    # Cause a restart of the proxy
+	    conn = httplib.HTTPConnection(self._proxy.split(':')[0]+':5678') # Assume restart always listens on this port for now
+	    conn.request("GET", "/")
+	    resp = conn.getresponse() # Don't need to do anything with it. Just want to know that the request was acknowledge
+
             # Load the page
             Zombie_cmd = [ENV, ZombieJS, ZombieLOADER, url, str(self._timeout)]
 	    if self._proxy:
