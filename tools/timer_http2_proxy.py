@@ -6,7 +6,6 @@ import logging
 import argparse
 import urlparse
 import random
-import numpy
 import pprint
 import cPickle
 import time

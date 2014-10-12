@@ -7,7 +7,7 @@ from loader import Loader, LoadResult, Timeout, TimeoutError
 
 ENV = '/usr/bin/env'
 ZombieJS = 'node'
-ZombieLOADER = '/home/b.kyle/github/node-http2/example/pageloader_client.js'
+ZombieLOADER = '/home/ec2-user/node-http2/example/pageloader_client.js'
 
 # TODO: when do we return FAILURE_NO_200?
 # TODO: enable caching
