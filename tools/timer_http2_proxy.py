@@ -26,6 +26,38 @@ TSHARK_CAP = 'tshark -i %s -w %s port %s'
 
 HTTP_METHODS = ['GET', 'PUT', 'OPTIONS', 'HEAD', 'POST', 'DELETE', 'TRACE', 'CONNECT']
 
+class TrialResult(object):
+  def __init__(self, init_obj_size, init_obj_time, total_size, total_time, objs):
+	self._init_obj_size = init_obj_size
+	self._init_obj_time = init_obj_time
+	self._total_size = total_size
+	self._total_time = total_time
+	self._objs = objs
+
+  def _get_init_obj_size(self):
+       	return self._init_obj_size
+  InitSize = property(_get_init_obj_size)
+
+  def _get_init_obj_time(self):
+       	return self._init_obj_time
+  InitTime = property(_get_init_obj_time)
+
+  def _get_total_size(self):
+       	return self._total_size
+  TotalSize = property(_get_total_size)
+
+  def _get_total_time(self):
+       	return self._total_time
+  TotalTime = property(_get_total_time)
+
+  def _get_objs(self):
+       	return self._objs
+  Objects = property(_get_objs)
+
+  def toString(self):
+	return 'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s' % (self._init_obj_size,\
+	  self._init_obj_time, self._total_size, self._total_time, self._objs)
+
 class Trial(object):
   def __init__(self, trial_hash, directory, use_proxy):
 	self.directory = directory
@@ -38,6 +70,32 @@ class Trial(object):
 
   def getOutput(self):
 	return os.path.join(self.directory, self.trial_hash+'.output')
+
+  def getResult(self):
+	first_time = first_size = True
+	init_time = init_size = total_time = total_size = -1
+	objs = 0
+	try:
+          with open(self.getOutput(), "r") as f:
+	    for line in f:
+	      chunks = line.rstrip().split()
+	      if len(chunks) > 2 and chunks[0] in HTTP_METHODS:
+		if first_time:
+	          value = int(chunks[-1].rstrip('ms'))
+		  init_time = value
+		  first_time = False
+		objs += 1
+	      elif len(chunks) == 2 and chunks[0].lower() == 'content-length:':
+		if first_size:
+		  init_size = int(chunks[1])
+		  first_size = False
+		total_size += int(chunks[1])
+	      elif len(chunks) == 1 and chunks[0].startswith('LOAD_TIME'):
+		total_time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
+        except Exception as e:
+	  logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', self.getOutput(), line, e)
+	  return None
+	return TrialResult(init_size, init_time, total_size, total_time, objs)
 
 class URLResult(object):
     '''Statistics of a single URL'''
@@ -57,6 +115,25 @@ class URLResult(object):
 		results.add_trial(trial)
 	for trial in self.noproxy_trials:
 		results.add_trial(trial)
+
+    def getResult(self, wproxy = True):
+	sum_init_time = sum_init_size = sum_time = sum_size = count = objs = 0
+	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
+		r = trial.getResult()
+		if not r:
+			continue
+		count += 1
+		sum_init_time += r.InitTime
+		sum_init_size += r.InitSize
+		sum_time += r.TotalTime		
+		sum_size += r.TotalSize
+		objs += r.Objects
+		print 'TRIAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
+	if count == 0:
+		return
+	print 'FINAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s' % (sum_init_size/count,\
+	  sum_init_time/count, sum_size/count, sum_time/count, objs/count)
 
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
@@ -130,36 +207,8 @@ def fetch_url(url, proxy):
 
 def process_results(results):
   for url, result in results.iteritems():
-    for trial in result.proxy_trials:	
-      try:
-	out = [-1, 0]
-        with open(trial.getOutput(), "r") as f:
-	  for line in f:
-	    chunks = line.rstrip().split()
-	    if len(chunks) > 2 and chunks[0] in HTTP_METHODS:
-	      value = int(chunks[-1].rstrip('ms'))
-	      if chunks[1].rstrip('/') == url:
-		out[0] = value
-	      else:
-		out[1] += value
-	print url, 'YESPROXY', out[0], out[1]
-      except Exception as e:
-	logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', trial.getOutput(), line, e)
-    for trial in result.noproxy_trials:	
-      try:
-	out = [-1, 0]
-        with open(trial.getOutput(), "r") as f:
-	  for line in f:
-	    chunks = line.rstrip().split()
-	    if len(chunks) > 2 and chunks[0] in HTTP_METHODS:
-	      value = int(chunks[-1].rstrip('ms'))
-	      if chunks[1].rstrip('/') == url:
-		out[0] = value
-	      else:
-		out[1] += value
-	print url, 'NOPROXY', out[0], out[1]
-      except Exception as e:
-	logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', trial.getOutput(), line, e)
+    result.getResult(True)
+    result.getResult(False)
 
 def main():
 
@@ -188,20 +237,20 @@ def main():
 	    results[url] = URLResult(url)
 
 	for i in range(args.numtrials):
-	  at_least_1_success = False
-	  # With Proxy
-	  use_proxy = True
+	  at_least_1_success = False	  
 
 	  random.shuffle(args.urls)
-	  for _ in range(2):   
-	    for url in args.urls:
-	      trial_hash = fetch_url(url, use_proxy)
-	      if trial_hash != None:
-		  results[url].add_trial(Trial(trial_hash, args.outdir, use_proxy))
-		  at_least_1_success = True
-
+	  for url in args.urls:
+	    # With Proxy
+	    trial_hash = fetch_url(url, True)
+	    if trial_hash != None:
+		results[url].add_trial(Trial(trial_hash, args.outdir, False))
+		at_least_1_success = True
 	    # Without Proxy
-	    use_proxy = False
+	    trial_hash = fetch_url(url, False)
+	    if trial_hash != None:
+		results[url].add_trial(Trial(trial_hash, args.outdir, False))
+		at_least_1_success = True
 
           if not at_least_1_success:
 	    continue
