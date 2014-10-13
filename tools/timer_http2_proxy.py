@@ -243,7 +243,7 @@ def main():
 	    # With Proxy
 	    trial_hash = fetch_url(url, True)
 	    if trial_hash != None:
-		results[url].add_trial(Trial(trial_hash, args.outdir, False))
+		results[url].add_trial(Trial(trial_hash, args.outdir, True))
 		at_least_1_success = True
 	    # Without Proxy
 	    trial_hash = fetch_url(url, False)
