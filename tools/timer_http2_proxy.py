@@ -171,14 +171,15 @@ def fetch_url(url, proxy):
   #except Exception as e:
   #  logging.error('Error clearing cache. (%s)', e)
 
-  try:
-    cmd = TSHARK_CAP % (args.interface, filename, args.proxy_port if proxy else '443')
-    logging.debug(cmd)
-    tcpdump_proc = subprocess.Popen(cmd, shell=True)
-  except Exception as e:
-    logging.error('Error starting tshark. Skipping this trial. (%s)', e)
-    time.sleep(5)
-    return None
+  tcpdump_proc = None
+  #try:
+  #  cmd = TSHARK_CAP % (args.interface, filename, args.proxy_port if proxy else '443')
+  #  logging.debug(cmd)
+  #  tcpdump_proc = subprocess.Popen(cmd, shell=True)
+  #except Exception as e:
+  #  logging.error('Error starting tshark. Skipping this trial. (%s)', e)
+  #  time.sleep(5)
+  #  return None
 
   loader = ZombieJSLoader(outdir=args.outdir, num_trials=1,\
     	disable_local_cache=True, http2=True,\
@@ -197,7 +198,7 @@ def fetch_url(url, proxy):
 
   time.sleep(1)
   if result.status != LoadResult.SUCCESS:
-    os.remove(filename)
+    #os.remove(filename)
     return None
   else:
     with open(output_file, "w") as outf:

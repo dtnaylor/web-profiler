@@ -51,8 +51,8 @@ class ZombieJSLoader(Loader):
                 Zombie_cmd.append(self._proxy)
 
             logging.debug('Running ZombieJS: %s', Zombie_cmd)
-            with Timeout(seconds=self._timeout+5):
-                output = subprocess.check_output(Zombie_cmd)
+            #with Timeout(seconds=self._timeout+5): The process should always end
+            output = subprocess.check_output(Zombie_cmd)
 
             return LoadResult(LoadResult.SUCCESS, url, raw=output)
 
