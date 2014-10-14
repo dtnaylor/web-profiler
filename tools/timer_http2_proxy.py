@@ -236,11 +236,11 @@ def main():
 	for url in args.urls:
 	    results[url] = URLResult(url)
 
-	for i in range(args.numtrials):
+	# random.shuffle(args.urls)
+        for url in args.urls:
 	  at_least_1_success = False	  
 
-	  random.shuffle(args.urls)
-	  for url in args.urls:
+	  for i in range(args.numtrials):
 	    # With Proxy
 	    trial_hash = fetch_url(url, True)
 	    if trial_hash != None:
