@@ -116,7 +116,7 @@ class URLResult(object):
 		results.add_trial(trial)
 
     def getResult(self, wproxy = True):
-	sum_init_time = sum_init_size = sum_time = sum_size = count = objs = 0
+	sum_init_time = sum_init_size = sum_time = sum_size = count = objs = 0.0
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
 		if not r:
@@ -131,8 +131,8 @@ class URLResult(object):
 	if count == 0:
 		return
 	print 'FINAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
-	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s' % (sum_init_size/count,\
-	  sum_init_time/count, sum_size/count, sum_time/count, objs/count)
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (sum_init_size/count,\
+	  sum_init_time/count, sum_size/count, sum_time/count, objs/count, count)
 
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
