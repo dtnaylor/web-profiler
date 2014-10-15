@@ -12,6 +12,7 @@ import time
 import signal
 import subprocess
 import glob
+import numpy
 from collections import defaultdict
 from datetime import datetime
 
@@ -116,23 +117,32 @@ class URLResult(object):
 		results.add_trial(trial)
 
     def getResult(self, wproxy = True):
-	sum_init_time = sum_init_size = sum_time = sum_size = count = objs = 0.0
+	sum_init_time = []
+        sum_init_size = []
+	sum_time = [] 
+	sum_size = [] 
+	count = 0.0
+	objs = []
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
-		if not r:
+		if not r or r.InitTime == -1: # Ignore trials where the root object was not downloaded
 			continue
 		count += 1
-		sum_init_time += r.InitTime
-		sum_init_size += r.InitSize
-		sum_time += r.TotalTime		
-		sum_size += r.TotalSize
-		objs += r.Objects
+		sum_init_time.append(r.InitTime)
+		sum_init_size.append(r.InitSize)
+		sum_time.append(r.TotalTime)
+		sum_size.append(r.TotalSize)
+		objs.append(r.Objects)
 		print 'TRIAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 	if count == 0:
 		return
-	print 'FINAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
-	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (sum_init_size/count,\
-	  sum_init_time/count, sum_size/count, sum_time/count, objs/count, count)
+	print 'FINAL_MEAN', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.mean(sum_init_size),\
+	  numpy.mean(sum_init_time), numpy.mean(sum_size), numpy.mean(sum_time), numpy.mean(objs), count)
+
+	print 'FINAL_MEDIAN', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(sum_init_size),\
+	  numpy.median(sum_init_time), numpy.median(sum_size), numpy.median(sum_time), numpy.median(objs), count)
 
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
