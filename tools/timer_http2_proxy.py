@@ -97,6 +97,24 @@ class Trial(object):
 	  return None
 	return TrialResult(init_size, init_time, total_size, total_time, objs)
 
+class URLStat(object):
+  def __init__(self, url):
+    self.url = url
+    self.sum_init_time = []
+    self.sum_init_size = []
+    self.sum_time = [] 
+    self.sum_size = [] 
+    self.objs = []
+    self.r = []
+
+  def subset(self, indices):
+    self.sum_init_time = getSublist(self.sum_init_time, indices)
+    self.sum_init_size = getSublist(self.sum_init_size, indices)
+    self.sum_time = getSublist(self.sum_time, indices)
+    self.sum_size = getSublist(self.sum_size, indices)
+    self.objs = getSublist(self.objs, indices)
+    self.r = getSublist(self.r, indices)
+
 class URLResult(object):
     '''Statistics of a single URL'''
     def __init__(self, url):
@@ -117,32 +135,67 @@ class URLResult(object):
 		results.add_trial(trial)
 
     def getResult(self, wproxy = True):
-	sum_init_time = []
-        sum_init_size = []
-	sum_time = [] 
-	sum_size = [] 
-	count = 0.0
-	objs = []
+	result = URLStat(self.url)
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
 		if not r or r.InitTime == -1: # Ignore trials where the root object was not downloaded
 			continue
-		count += 1
-		sum_init_time.append(r.InitTime)
-		sum_init_size.append(r.InitSize)
-		sum_time.append(r.TotalTime)
-		sum_size.append(r.TotalSize)
-		objs.append(r.Objects)
-		print 'TRIAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
-	if count == 0:
-		return
-	print 'FINAL_MEAN', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
-	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.mean(sum_init_size),\
-	  numpy.mean(sum_init_time), numpy.mean(sum_size), numpy.mean(sum_time), numpy.mean(objs), count)
+		result.sum_init_time.append(r.InitTime)
+		result.sum_init_size.append(r.InitSize)
+		result.sum_time.append(r.TotalTime)
+		result.sum_size.append(r.TotalSize)
+		result.objs.append(r.Objects)
+		result.r.append(r)
+		#print 'TRIAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
+	return result
 
-	print 'FINAL_MEDIAN', self.url, 'YESPROXY' if wproxy else 'NOPROXY',\
-	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(sum_init_size),\
-	  numpy.median(sum_init_time), numpy.median(sum_size), numpy.median(sum_time), numpy.median(objs), count)
+
+def analyzeResult(proxy, noproxy):
+  objs = proxy.objs + noproxy.objs
+  if len(objs) == 0:
+    return
+  mode = getMode(objs)
+
+  # Proxy
+  indices = getIndices(proxy.objs, mode)
+  if len(indices) > 0: 
+	proxy.subset(indices)  
+
+        for r in proxy.r:
+	  print 'TRIAL', proxy.url, 'YESPROXY', r.toString()
+
+  	print 'FINAL_MEAN', proxy.url, 'YESPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.mean(proxy.sum_init_size),\
+	  numpy.mean(proxy.sum_init_time), numpy.mean(proxy.sum_size), numpy.mean(proxy.sum_time), mode, len(indices))
+
+	print 'FINAL_MEDIAN', proxy.url, 'YESPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(proxy.sum_init_size),\
+	  numpy.median(proxy.sum_init_time), numpy.median(proxy.sum_size), numpy.median(proxy.sum_time), mode, len(indices))
+
+  # No Proxy
+  indices = getIndices(noproxy.objs, mode)
+  if len(indices) > 0: 
+	noproxy.subset(indices)  
+
+        for r in noproxy.r:
+	  print 'TRIAL', noproxy.url, 'NOPROXY', r.toString()
+
+  	print 'FINAL_MEAN', noproxy.url, 'NOPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.mean(noproxy.sum_init_size),\
+	  numpy.mean(noproxy.sum_init_time), numpy.mean(noproxy.sum_size), numpy.mean(noproxy.sum_time), mode, len(indices))
+
+	print 'FINAL_MEDIAN', noproxy.url, 'NOPROXY',\
+	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(noproxy.sum_init_size),\
+	  numpy.median(noproxy.sum_init_time), numpy.median(noproxy.sum_size), numpy.median(noproxy.sum_time), mode, len(indices))
+
+def getSublist(vals, indices):
+  return [v for i,v in enumerate(vals) if i in indices]
+
+def getMode(vals):
+  return sorted(vals, key=vals.count)[-1]
+
+def getIndices(vals, val):
+  return [i for i,v in enumerate(vals) if v == val]
 
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
@@ -217,8 +270,7 @@ def fetch_url(url, proxy):
 
 def process_results(results):
   for url, result in results.iteritems():
-    result.getResult(True)
-    result.getResult(False)
+    analyzeResult(result.getResult(True), result.getResult(False))
 
 def main():
 
