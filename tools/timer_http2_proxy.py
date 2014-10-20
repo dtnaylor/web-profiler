@@ -26,6 +26,7 @@ TSHARK_CAP = 'tshark -i %s -w %s port %s'
 
 HTTP_METHODS = ['GET', 'PUT', 'OPTIONS', 'HEAD', 'POST', 'DELETE', 'TRACE', 'CONNECT']
 
+# Parsed output file results from a single trial
 class TrialResult(object):
   def __init__(self, init_obj_size, init_obj_time, total_size, total_time, objs):
 	self._init_obj_size = init_obj_size
@@ -58,6 +59,7 @@ class TrialResult(object):
 	return 'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s' % (self._init_obj_size,\
 	  self._init_obj_time, self._total_size, self._total_time, self._objs)
 
+# Trial instance store in filesystem
 class Trial(object):
   def __init__(self, trial_hash, directory, use_proxy):
 	self.directory = directory
@@ -71,6 +73,7 @@ class Trial(object):
   def getOutput(self):
 	return os.path.join(self.directory, self.trial_hash+'.output')
 
+  # Parse trial output and generate a TrialResult object
   def getResult(self):
 	first_time = first_size = True
 	init_time = init_size = total_time = total_size = -1
@@ -97,6 +100,7 @@ class Trial(object):
 	  return None
 	return TrialResult(init_size, init_time, total_size, total_time, objs)
 
+# Accumulated results for a URL
 class URLStat(object):
   def __init__(self, url):
     self.url = url
@@ -115,6 +119,7 @@ class URLStat(object):
     self.objs = getSublist(self.objs, indices)
     self.r = getSublist(self.r, indices)
 
+# URL experiment instance stored in file system
 class URLResult(object):
     '''Statistics of a single URL'''
     def __init__(self, url):
@@ -134,6 +139,7 @@ class URLResult(object):
 	for trial in self.noproxy_trials:
 		results.add_trial(trial)
 
+    # Parse the output of all trials in the experiment and generate a URLStat result
     def getResult(self, wproxy = True):
 	result = URLStat(self.url)
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
@@ -149,7 +155,12 @@ class URLResult(object):
 		#print 'TRIAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 	return result
 
+# Process output of all trials for all URLS stored in file system  and output the analyzed results
+def process_results(results):
+  for url, result in results.iteritems():
+    analyzeResult(result.getResult(True), result.getResult(False))
 
+# Analyze a specific URL result
 def analyzeResult(proxy, noproxy):
   objs = proxy.objs + noproxy.objs
   if len(objs) == 0:
@@ -188,14 +199,19 @@ def analyzeResult(proxy, noproxy):
 	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(noproxy.sum_init_size),\
 	  numpy.median(noproxy.sum_init_time), numpy.median(noproxy.sum_size), numpy.median(noproxy.sum_time), mode, len(indices))
 
+# Get the sublist of a list with given indices
 def getSublist(vals, indices):
   return [v for i,v in enumerate(vals) if i in indices]
 
+# Get the mode of a list
 def getMode(vals):
   return sorted(vals, key=vals.count)[-1]
 
+# Get the indices in a list that match with given value
 def getIndices(vals, val):
   return [i for i,v in enumerate(vals) if v == val]
+
+# ------------------CODE FOR RUNNING THE EXPERIMENT---------------------------#
 
 def make_url(url, protocol, port=None):
     # make sure it's a complete URL to begin with, or urlparse can't parse it
@@ -222,10 +238,11 @@ def fetch_url(url, proxy):
 
   while True:
     trial_hash = id_generator()
-    filename = os.path.join(args.outdir,trial_hash+'.pcap')
-    if not os.path.isfile(filename):
+    dump_file = os.path.join(args.outdir,trial_hash+'.pcap')
+    output_file = os.path.join(args.outdir,trial_hash+'.output')
+    if not os.path.isfile(dump_file) and not os.path.isfile(output_file):
 	break
-  output_file = os.path.join(args.outdir,trial_hash+'.output')
+
 
   # Clear cache
   #try:
@@ -236,7 +253,7 @@ def fetch_url(url, proxy):
 
   tcpdump_proc = None
   #try:
-  #  cmd = TSHARK_CAP % (args.interface, filename, args.proxy_port if proxy else '443')
+  #  cmd = TSHARK_CAP % (args.interface, dump_file, args.proxy_port if proxy else '443')
   #  logging.debug(cmd)
   #  tcpdump_proc = subprocess.Popen(cmd, shell=True)
   #except Exception as e:
@@ -246,7 +263,7 @@ def fetch_url(url, proxy):
 
   loader = ZombieJSLoader(outdir=args.outdir, num_trials=1,\
     	disable_local_cache=True, http2=True,\
-    	timeout=args.timeout, full_page=True, proxy= args.proxy if proxy else None)
+    	timeout=args.timeout, full_page=True, proxy= args.proxy if proxy else args.proxy_ip+':8080')
   result = loader._load_page(url, args.outdir)
 
   if tcpdump_proc:
@@ -261,45 +278,41 @@ def fetch_url(url, proxy):
 
   time.sleep(1)
   if result.status != LoadResult.SUCCESS:
-    #os.remove(filename)
+    #os.remove(dump_file)
     return None
   else:
     with open(output_file, "w") as outf:
 	outf.write(result.raw)
     return trial_hash
 
-def process_results(results):
-  for url, result in results.iteritems():
-    analyzeResult(result.getResult(True), result.getResult(False))
-
 def main():
 
+    # Processing already collected results
     if args.process:
-        result_files = glob.glob(os.path.join(args.outdir, 'round.*.result'))
 	results = {}
-        for result_file in result_files:
-            with open(result_file, 'r') as f:
-                res = cPickle.load(f)
-		for url in res:
-			if url not in results:
-				results[url] = res[url]
-			else:
-				res[url].add_to_results(results[url])
+	for directory in args.process:
+        	result_files = glob.glob(os.path.join(directory, 'round.*.result'))
+	        for result_file in result_files:
+        	    with open(result_file, 'r') as f:
+        	        res = cPickle.load(f)
+			for url in res:
+				if url not in results:
+					results[url] = res[url]
+				else:
+					res[url].add_to_results(results[url])
 	process_results(results)
+    # Running an experiment
     else:
         if args.urlfile:
             with open(args.urlfile, 'r') as f:
                 for line in f:
                     args.urls.append(line.strip().split()[0])
             f.closed
-        
-	# Create results dictionary
-	results = {}
-	for url in args.urls:
-	    results[url] = URLResult(url)
 
-	# random.shuffle(args.urls)
         for url in args.urls:
+	  results = {}
+	  results[url] = URLResult(url)
+	  # Prevents writing the result file if none of the trials succeed
 	  at_least_1_success = False	  
 
 	  for i in range(args.numtrials):
@@ -317,6 +330,7 @@ def main():
           if not at_least_1_success:
 	    continue
 
+	  
 	  while True:
     	    filename = os.path.join(args.outdir,'round.'+id_generator()+'.result')
      	    if not os.path.isfile(filename):
@@ -337,7 +351,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--numtrials', type=int, default=20, help='How many times to fetch each URL with each protocol')
     parser.add_argument('-t', '--timeout', type=int, default=10, help='Timeout for requests, in seconds')
     parser.add_argument('-i', '--interface', default='eth0', help='Interface to use')
-    parser.add_argument('-p', '--process', action='store_true', default=False, help='Do not perform page fetch, reprocess files')
+    parser.add_argument('-p', '--process', nargs='+', default=None, help='Do not perform page fetch, reprocess files')
     parser.add_argument('-x', '--proxy', default='mplane.pdi.tid.es:4567', help='Proxy to use in experiments')
     parser.add_argument('-g', '--tag', help='Tag to prepend to output files')
     parser.add_argument('-o', '--outdir', default='.', help='Output directory')
