@@ -83,20 +83,20 @@ class Trial(object):
           with open(self.getOutput(), "r") as f:
 	    for line in f:
 	      chunks = line.rstrip().split()
-	      if len(chunks) <= 2:
+	      if len(chunks) < 1:
 		continue
 
 	      if chunks[0] == 'REQUEST':
 		req[chunks[2]] = int(chunks[1])
-	      elif: chunks[0] == 'RESPONSE':
+	      elif chunks[0] == 'RESPONSE':
 		if first:
 		  first = False
 		  init_time = int(chunks[1]) - req[chunks[2]]
 		  init_size = int(chunks[3])
 		total_size += int(chunks[3])
 		objs += 1
-	      elif: chunks[0] == 'LOAD_TIME':
-		total+time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
+	      elif chunks[0].startswith('LOAD_TIME'):
+		total_time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
         except Exception as e:
 	  logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', self.getOutput(), line, e)
 	  return None

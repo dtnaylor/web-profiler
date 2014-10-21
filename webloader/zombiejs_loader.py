@@ -8,7 +8,7 @@ from loader import Loader, LoadResult, Timeout, TimeoutError
 
 ENV = '/usr/bin/env'
 ZombieJS = 'node'
-ZombieLOADER = '/home/b.kyle/github/node-http2/example/pageloader_client.js'
+ZombieLOADER = '/home/ec2-user/node-http2/example/pageloader_client.js'
 
 # TODO: when do we return FAILURE_NO_200?
 # TODO: enable caching
@@ -39,10 +39,10 @@ class ZombieJSLoader(Loader):
         logging.info('Loading page: %s', url)
         try:	    
 	    # Cause a restart of the proxy
-	    if self._proxy:
-	    	conn = httplib.HTTPConnection(self._proxy.split(':')[0]+':5678') # Assume restart always listens on this port for now
-	    	conn.request("GET", "/")
-	    	resp = conn.getresponse() # Don't need to do anything with it. Just want to know that the request was acknowledge
+	    #if self._proxy:
+	    #	conn = httplib.HTTPConnection(self._proxy.split(':')[0]+':5678') # Assume restart always listens on this port for now
+	    #	conn.request("GET", "/")
+	    #	resp = conn.getresponse() # Don't need to do anything with it. Just want to know that the request was acknowledge
 
             # Load the page
             Zombie_cmd = [ENV, ZombieJS, ZombieLOADER, url, str(self._timeout)]
