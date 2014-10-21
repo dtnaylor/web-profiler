@@ -75,26 +75,28 @@ class Trial(object):
 
   # Parse trial output and generate a TrialResult object
   def getResult(self):
-	first_time = first_size = True
-	init_time = init_size = total_time = total_size = -1
-	objs = 0
+	first = True
+	req = {}
+	init_time = init_size = total_time = -1
+	total_size = objs = 0
 	try:
           with open(self.getOutput(), "r") as f:
 	    for line in f:
 	      chunks = line.rstrip().split()
-	      if len(chunks) > 2 and chunks[0] in HTTP_METHODS:
-		if first_time:
-	          value = int(chunks[-1].rstrip('ms'))
-		  init_time = value
-		  first_time = False
+	      if len(chunks) <= 2:
+		continue
+
+	      if chunks[0] == 'REQUEST':
+		req[chunks[2]] = int(chunks[1])
+	      elif: chunks[0] == 'RESPONSE':
+		if first:
+		  first = False
+		  init_time = int(chunks[1]) - req[chunks[2]]
+		  init_size = int(chunks[3])
+		total_size += int(chunks[3])
 		objs += 1
-	      elif len(chunks) == 2 and chunks[0].lower() == 'content-length:':
-		if first_size:
-		  init_size = int(chunks[1])
-		  first_size = False
-		total_size += int(chunks[1])
-	      elif len(chunks) == 1 and chunks[0].startswith('LOAD_TIME'):
-		total_time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
+	      elif: chunks[0] == 'LOAD_TIME':
+		total+time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
         except Exception as e:
 	  logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', self.getOutput(), line, e)
 	  return None
@@ -144,7 +146,7 @@ class URLResult(object):
 	result = URLStat(self.url)
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
-		if not r or r.InitTime == -1: # Ignore trials where the root object was not downloaded
+		if not r or r.InitSize == -1 or r.TotalSize == -1: # Ignore trials where the root object was not downloaded
 			continue
 		result.sum_init_time.append(r.InitTime)
 		result.sum_init_size.append(r.InitSize)
