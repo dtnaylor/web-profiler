@@ -75,6 +75,7 @@ class Trial(object):
 
   # Parse trial output and generate a TrialResult object
   def getResult(self):
+	first_time = last_time = -1
 	first = True
 	req = {}
 	init_time = init_size = total_time = -1
@@ -87,6 +88,8 @@ class Trial(object):
 		continue
 
 	      if chunks[0] == 'REQUEST':
+		if first_time == -1:
+		  first_time = int(chunks[1])
 		req[chunks[2]] = int(chunks[1])
 	      elif chunks[0] == 'RESPONSE':
 		if first:
@@ -95,12 +98,13 @@ class Trial(object):
 		  init_size = int(chunks[3])
 		total_size += int(chunks[3])
 		objs += 1
-	      elif chunks[0].startswith('LOAD_TIME'):
-		total_time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
+		last_time = int(chunks[1])
+#	      elif chunks[0].startswith('LOAD_TIME'):
+#		total_time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
         except Exception as e:
 	  logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', self.getOutput(), line, e)
 	  return None
-	return TrialResult(init_size, init_time, total_size, total_time, objs)
+	return TrialResult(init_size, init_time, total_size, last_time-first_time, objs)
 
 # Accumulated results for a URL
 class URLStat(object):
@@ -164,10 +168,18 @@ def process_results(results):
 
 # Analyze a specific URL result
 def analyzeResult(proxy, noproxy):
-  objs = proxy.objs + noproxy.objs
-  if len(objs) == 0:
-    return
-  mode = getMode(objs)
+  while True:
+  	objs = proxy.objs + noproxy.objs
+  	if len(objs) == 0:
+    		return
+	# Get the most frequently occuring number of objects
+  	mode = getMode(objs)
+	# Check to see that both with proxy and without proxy have data points in the mode
+	if len(getIndices(proxy.objs, mode)) > 0 and len(getIndices(noproxy.objs, mode)) > 0:
+		break
+	# Remove the bad mode
+	proxy.subset([i for i in range(len(proxy.objs)) if i not in getIndices(proxy.objs, mode)])
+	noproxy.subset([i for i in range(len(proxy.objs)) if i not in getIndices(noproxy.objs, mode)])
 
   # Proxy
   indices = getIndices(proxy.objs, mode)
@@ -265,7 +277,7 @@ def fetch_url(url, proxy):
 
   loader = ZombieJSLoader(outdir=args.outdir, num_trials=1,\
     	disable_local_cache=True, http2=True,\
-    	timeout=args.timeout, full_page=True, proxy= args.proxy if proxy else args.proxy_ip+':8080')
+    	timeout=args.timeout, full_page=True, proxy= args.proxy if proxy else args.proxy_ip+':6789')
   result = loader._load_page(url, args.outdir)
 
   if tcpdump_proc:
