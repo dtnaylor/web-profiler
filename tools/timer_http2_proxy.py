@@ -150,6 +150,8 @@ class URLResult(object):
 	result = URLStat(self.url)
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
+		if args.all:
+			print 'ALL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 		if not r or r.InitSize == -1 or r.TotalSize == -1: # Ignore trials where the root object was not downloaded
 			continue
 		result.sum_init_time.append(r.InitTime)
@@ -158,7 +160,6 @@ class URLResult(object):
 		result.sum_size.append(r.TotalSize)
 		result.objs.append(r.Objects)
 		result.r.append(r)
-		#print 'TRIAL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 	return result
 
 # Process output of all trials for all URLS stored in file system  and output the analyzed results
@@ -366,6 +367,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--timeout', type=int, default=10, help='Timeout for requests, in seconds')
     parser.add_argument('-i', '--interface', default='eth0', help='Interface to use')
     parser.add_argument('-p', '--process', nargs='+', default=None, help='Do not perform page fetch, reprocess files')
+    parser.add_argument('-a', '--all', action='store_true', default=False, help='Output all trials')
     parser.add_argument('-x', '--proxy', default='mplane.pdi.tid.es:4567', help='Proxy to use in experiments')
     parser.add_argument('-g', '--tag', help='Tag to prepend to output files')
     parser.add_argument('-o', '--outdir', default='.', help='Output directory')
