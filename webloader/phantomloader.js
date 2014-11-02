@@ -99,7 +99,8 @@ function createHAR(address, title, startTime, resources)
 
 var page = require('webpage').create(),
     system = require('system'),
-	url;
+	url
+    error_msg = '';
 
 
 if (system.args.length < 4) {
@@ -143,6 +144,7 @@ page.onResourceRequested = function (req) {
 };
 
 page.onResourceReceived = function (res) {
+    JSON.stringify(res);
     if (res.stage === 'start') {
         page.resources[res.id].startReply = res;
     }
@@ -152,10 +154,34 @@ page.onResourceReceived = function (res) {
 };
 
 
+page.onError = function(msg, trace) {
+
+  console.log('error');
+
+  var msgStack = ['ERROR: ' + msg];
+
+  if (trace && trace.length) {
+    msgStack.push('TRACE:');
+    trace.forEach(function(t) {
+      msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
+    });
+  }
+
+  console.error(msgStack.join('\n'));
+  error_msg = msg;
+
+};
+
+page.onResourceError = function(resourceError) {
+    error_msg = 'Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString;
+};
+
+
 page.open(page.address, function (status) {
     var har;
+    console.log(status)
     if (status !== 'success') {
-    	console.log('FAILURE:unknown');
+    	console.log('FAILURE:' + error_msg);
         phantom.exit(1);
     } else {
         page.endTime = new Date();
