@@ -7,6 +7,7 @@ import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from webloader.phantomjs_loader import PhantomJSLoader
+from webloader.chrome_loader import ChromeLoader
 
 
 def main():
@@ -27,8 +28,8 @@ def main():
 
     # load pages and save HARs
     if len(urls) > 0:
-        loader = PhantomJSLoader(outdir=args.outdir, user_agent=args.useragent,\
-            num_trials=args.numtrials)
+        loader = ChromeLoader(outdir=args.outdir, user_agent=args.useragent,\
+            num_trials=args.numtrials, restart_on_fail=True)
         loader.load_pages(urls)
 
 

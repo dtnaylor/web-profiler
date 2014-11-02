@@ -54,13 +54,8 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
     Used to test the availability of sites of HTTP or HTTPS and by the 
     `PythonRequestsLoader`.
 
-* [node-http2](https://github.com/molnarg/node-http2)
+* [node-http2](https://github.com/scoky/node-http2)
 
-    Needed by the `NodeJsLoader`. Location of the module must be hardcoded 
-    in client.js.
-
-* [stream-length](https://github.com/jeffbski/length-stream)
-
-    Needed by the `NodeJsLoader`. Location of the module must be hardcoded 
-    in client.js.
-
+    Needed by the `NodeJsLoader` and `ZombieJsLoader`. Location of the module must be hardcoded 
+    in `webloader/nodejs_loader.py` and `webloader/zombiejs_loader.py`.
+z

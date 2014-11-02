@@ -58,7 +58,7 @@ class LoadResult(object):
     FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, status, url, final_url=None, time=None, size=None,\
-        har=None, img=None):
+        har=None, img=None, raw=None):
 
         self._status = status
         self._url = url  # the initial URL we requested
@@ -67,6 +67,7 @@ class LoadResult(object):
         self._size = size  # ??? all objects?
         self._har_path = har
         self._image_path = img
+	self._raw = raw
 
     @property
     def status(self):
@@ -102,6 +103,11 @@ class LoadResult(object):
     def image_path(self):
         '''Path to a screenshot of the loaded page.'''
         return self._image_path
+
+    @property
+    def raw(self):
+        '''Raw output from the underlying command.'''
+        return self._raw
 
     def __str__(self):
         return 'LoadResult (%s): %s' % (self._status,  pprint.saferepr(self.__dict__))
@@ -213,11 +219,12 @@ class Loader(object):
     :param full_page: load page's subresources and render; if False, only the object is fetched
     :param user_agent: use custom user agent; if None, use browser's default
     :param headless: don't use GUI (if there normally is one -- e.g., browsers)
+    :param restart_on_fail: if a load fails, set up the loader again (e.g., reboot chrome)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
-        user_agent=None, headless=True):
+        user_agent=None, headless=True, restart_on_fail=False, proxy=None):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -228,6 +235,8 @@ class Loader(object):
         self._full_page = full_page
         self._user_agent = user_agent
         self._headless = headless
+        self._restart_on_fail = restart_on_fail
+	self._proxy = proxy
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
@@ -362,6 +371,10 @@ class Loader(object):
                         self._urls.append(url)
                         self._load_results[url].append(result)
                         logging.debug(result)
+
+                        if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
+                            self._teardown()
+                            self._setup()
                     except Exception as e:
                         logging.exception('Error loading page %s: %s\n%s', url, e,\
                             traceback.format_exc())
