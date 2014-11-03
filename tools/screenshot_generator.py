@@ -6,7 +6,7 @@ import logging
 import argparse
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from webloader.chrome_loader import ChromeLoader
+from webloader.phantomjs_loader import PhantomJSLoader
 
 
 def main():
