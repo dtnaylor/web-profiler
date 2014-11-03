@@ -251,7 +251,10 @@ class Har(object):
             return None
 
     def _get_url(self):
-        return self.data['log']['pages'][0]['id']  # is this the 'title' field in browsermob or chrome?
+        id = self.data['log']['pages'][0]['id']
+        title = self.data['log']['pages'][0]['title']
+
+        return id if '://' in id else title
     url = property(_get_url)
     
     def _get_base_url(self):
