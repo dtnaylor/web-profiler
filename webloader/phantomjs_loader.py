@@ -41,17 +41,24 @@ class PhantomJSLoader(Loader):
         safeurl = self._sanitize_url(url)
         filename = '%s_trial%d.har' % (safeurl, trial_num)
         imagename = '%s_trial%d.png' % (safeurl, trial_num)
+
         harpath = os.path.join(outdir, filename)
-        imagepath = os.path.join(outdir, imagename)
-        logging.debug('Will save HAR to %s', harpath)
-        logging.debug('Will save screenshot to %s', imagepath)
+        if self._save_har:
+            logging.debug('Will save HAR to %s', harpath)
+
+        if self._save_screenshot:
+            imagepath = os.path.join(outdir, imagename)
+            logging.debug('Will save screenshot to %s', imagepath)
+        else:
+            imagepath = '/dev/null'
+
     
         # load the specified URL
         logging.info('Loading page: %s', url)
         try:
             # Load the page
-            phantom_cmd = '%s %s %s %s %d' % (PHANTOMJS, PHANTOMLOADER, url,\
-                imagepath, self._timeout)
+            phantom_cmd = '%s --ssl-protocol=any %s %s %s %d' %\
+                (PHANTOMJS, PHANTOMLOADER, url, imagepath, self._timeout)
             phantom_cmd = phantom_cmd.split()
             if self._user_agent:
                 phantom_cmd.append(' "%s"' % self._user_agent)
@@ -76,9 +83,10 @@ class PhantomJSLoader(Loader):
                     return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
             elif status == 'SUCCESS':
                 # Save the HAR
-                with open(harpath, 'w') as f:
-                    f.write(har)
-                f.closed
+                if self._save_har:
+                    with open(harpath, 'w') as f:
+                        f.write(har)
+                    f.closed
 
                 # Report status and time
                 returnvals = {field.split('=')[0]: field.split('=')[1] for field in message.split(';')}

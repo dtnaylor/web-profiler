@@ -220,11 +220,14 @@ class Loader(object):
     :param user_agent: use custom user agent; if None, use browser's default
     :param headless: don't use GUI (if there normally is one -- e.g., browsers)
     :param restart_on_fail: if a load fails, set up the loader again (e.g., reboot chrome)
+    :param save_har: save a HAR file to the output directory
+    :param save_screenshot: save a screenshot to the output directory
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
-        user_agent=None, headless=True, restart_on_fail=False, proxy=None):
+        user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
+        save_har=False, save_screenshot=False):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -236,6 +239,8 @@ class Loader(object):
         self._user_agent = user_agent
         self._headless = headless
         self._restart_on_fail = restart_on_fail
+        self._save_har = save_har
+        self._save_screenshot = save_screenshot
 	self._proxy = proxy
         
         # cummulative list of all URLs (one per trial)

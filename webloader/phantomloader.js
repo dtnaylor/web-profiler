@@ -191,6 +191,7 @@ page.open(page.address, function (status) {
         });
         har = createHAR(page.address, page.title, page.startTime, page.resources);
         console.log(JSON.stringify(har, undefined, 4));
+		console.log(system.args[2])
         page.render(system.args[2])
 		var t = page.endTime-page.startTime;
     	console.log('*=*=*=*\nSUCCESS:time=' + t + ';orig_url=' + url + ';final_url=' + page.url); // time in msec

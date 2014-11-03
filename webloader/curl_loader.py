@@ -15,6 +15,8 @@ class CurlLoader(Loader):
     .. note:: The :class:`CurlLoader` currently does not support HTTP2.
     .. note:: The :class:`CurlLoader` currently does not support caching.
     .. note:: The :class:`CurlLoader` currently does not support full page loading (i.e., fetching a page's subresources).
+    .. note:: The :class:`CurlLoader` currently does not support saving HARs.
+    .. note:: The :class:`CurlLoader` currently does not support saving screenshots.
     '''
 
     def __init__(self, **kwargs):
@@ -25,6 +27,11 @@ class CurlLoader(Loader):
             raise NotImplementedError('CurlLoader does not support local caching')
         if self._full_page:
             raise NotImplementedError('CurlLoader does not support loading a full page')
+        if self._save_har:
+            raise NotImplementedError('CurlLoader does not support saving HARs')
+        if self._save_screenshot:
+            raise NotImplementedError('CurlLoader does not support saving screensthos')
+            
         
         self._image_paths_by_url = defaultdict(list)
 

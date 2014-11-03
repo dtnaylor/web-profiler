@@ -17,6 +17,8 @@ class PythonRequestsLoader(Loader):
     .. note:: The :class:`PythonRequestsLoader` currently does not support disabling network caching.
     .. note:: The :class:`PythonRequestsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
     .. note:: The :class:`PythonRequestsLoader` currently does not support custom user agents.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support saving HARs.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support saving screenshots.
     '''
 
     def __init__(self, **kwargs):
@@ -31,6 +33,10 @@ class PythonRequestsLoader(Loader):
             raise NotImplementedError('PythonRequestsLoader does not support loading full pages.')
         if self._full_page:
             raise NotImplementedError('PythonRequestsLoader does not support custom user agents.')
+        if self._save_har:
+            raise NotImplementedError('PythonRequestsLoader does not support saving HARs.')
+        if self._save_screenshot:
+            raise NotImplementedError('PythonRequestsLoader does not support saving screenshots.')
 
 
     def _load_page(self, url, outdir, trial_num=-1):

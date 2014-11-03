@@ -16,6 +16,8 @@ class NodeJsLoader(Loader):
     .. note:: The :class:`NodeJsLoader` currently does not support caching.
     .. note:: The :class:`NodeJsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
     .. note:: The :class:`NodeJsLoader` currently does not support disabling network caches.
+    .. note:: The :class:`NodeJsLoader` currently does not support saving HARs.
+    .. note:: The :class:`NodeJsLoader` currently does not support saving screenshots.
     '''
 
     def __init__(self, **kwargs):
@@ -28,6 +30,10 @@ class NodeJsLoader(Loader):
             raise NotImplementedError('NodeJsLoader does not support loading a full page')
         if self._disable_network_cache:
             raise NotImplementedError('NodeJsLoader does not support disabling network caches.')
+        if self._save_har:
+            raise NotImplementedError('NodeJsLoader does not support saving HARs.')
+        if self._save_screenshot:
+            raise NotImplementedError('NodeJsLoader does not support saving screenshots.')
         
         self._image_paths_by_url = defaultdict(list)
 

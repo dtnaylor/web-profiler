@@ -19,7 +19,6 @@ DISPLAY = ':99'
 # TODO: final URL?
 # TODO: pass timeout to chrome?
 # TODO: FAILURE_NO_200?
-# TODO: user agent
 # TODO: Cache-Control header
 
 class ChromeLoader(Loader):
@@ -28,8 +27,8 @@ class ChromeLoader(Loader):
     .. note:: The :class:`ChromeLoader` currently does not time page load.
     .. note:: The :class:`ChromeLoader` currently does not save screenshots.
     .. note:: The :class:`ChromeLoader` currently does not support single-object loading (i.e., it always loads the full page).
-    .. note:: The :class:`ChromeLoader` currently does not support custom user agents.
     .. note:: The :class:`ChromeLoader` currently does not support disabling network caches.
+    .. note:: The :class:`ChromeLoader` currently does not support saving screenshots.
     '''
 
     def __init__(self, **kwargs):
@@ -40,6 +39,8 @@ class ChromeLoader(Loader):
             raise NotImplementedError('ChromeLoader does not support custom user agents.')
         if self._disable_network_cache:
             raise NotImplementedError('ChromeLoader does not support disabling network caches.')
+        if self._save_screenshot:
+            raise NotImplementedError('ChromeLoader does not support saving screenshots.')
 
         self._xvfb_proc = None
         self._chrome_proc = None
@@ -48,7 +49,10 @@ class ChromeLoader(Loader):
         # path for new HAR file
         safeurl = self._sanitize_url(url)
         filename = '%s_trial%d.har' % (safeurl, trial_num)
-        harpath = os.path.join(outdir, filename)
+        if self._save_har:
+            harpath = os.path.join(outdir, filename)
+        else:
+            harpath = '/dev/null'
         logging.debug('Will save HAR to %s', harpath)
     
         # load the specified URL
@@ -92,7 +96,8 @@ class ChromeLoader(Loader):
         try:
             # TODO: enable HTTP2
             options = ''
-            # caching options
+            if self._user_agent:
+                options += ' --user-agent="%s"' % self._user_agent
             if self._disable_local_cache:
                 options += ' --disable-application-cache --disable-cache'
             # options for chrome-har-capturer
