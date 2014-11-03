@@ -35,8 +35,6 @@ class ChromeLoader(Loader):
         super(ChromeLoader, self).__init__(**kwargs)
         if not self._full_page:
             raise NotImplementedError('ChromeLoader does not support loading only an object')
-        if self._user_agent:
-            raise NotImplementedError('ChromeLoader does not support custom user agents.')
         if self._disable_network_cache:
             raise NotImplementedError('ChromeLoader does not support disabling network caches.')
         if self._save_screenshot:
