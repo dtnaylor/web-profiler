@@ -224,7 +224,7 @@ class Loader(object):
     :param save_screenshot: save a screenshot to the output directory
     '''
 
-    def __init__(self, outdir='.', num_trials=1, http2=False, timeout=60,\
+    def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
         user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
         save_har=False, save_screenshot=False):
