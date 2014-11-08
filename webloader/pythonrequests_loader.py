@@ -6,7 +6,6 @@ import requests
 from collections import defaultdict
 from loader import Loader, LoadResult, Timeout, TimeoutError
 
-#TODO: user agent
 #TODO: disable network cache
 
 class PythonRequestsLoader(Loader):
@@ -16,7 +15,6 @@ class PythonRequestsLoader(Loader):
     .. note:: The :class:`PythonRequestsLoader` currently does not support local caching.
     .. note:: The :class:`PythonRequestsLoader` currently does not support disabling network caching.
     .. note:: The :class:`PythonRequestsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
-    .. note:: The :class:`PythonRequestsLoader` currently does not support custom user agents.
     .. note:: The :class:`PythonRequestsLoader` currently does not support saving HARs.
     .. note:: The :class:`PythonRequestsLoader` currently does not support saving screenshots.
     '''
@@ -31,8 +29,6 @@ class PythonRequestsLoader(Loader):
             raise NotImplementedError('PythonRequestsLoader does not support disabling network caching.')
         if self._full_page:
             raise NotImplementedError('PythonRequestsLoader does not support loading full pages.')
-        if self._full_page:
-            raise NotImplementedError('PythonRequestsLoader does not support custom user agents.')
         if self._save_har:
             raise NotImplementedError('PythonRequestsLoader does not support saving HARs.')
         if self._save_screenshot:
@@ -46,7 +42,10 @@ class PythonRequestsLoader(Loader):
         try:
             # Load the page
             with Timeout(seconds=self._timeout+5):
-                response = requests.get(url, timeout=self._timeout)
+                headers = {}
+                if self._user_agent:
+                    headers['User-Agent'] = self._user_agent
+                response = requests.get(url, timeout=self._timeout, headers=headers)
     
             # received response; may not have been successful
             if response.status_code != 200:
