@@ -28,7 +28,8 @@ def main():
     # load pages and save HARs
     if len(urls) > 0:
         loader = PhantomJSLoader(outdir=args.outdir, user_agent=args.useragent,\
-            num_trials=args.numtrials, restart_on_fail=True, save_screenshot=True)
+            num_trials=args.numtrials, restart_on_fail=True, save_screenshot=True,\
+            retries_per_trial=3)
         loader.load_pages(urls)
 
 

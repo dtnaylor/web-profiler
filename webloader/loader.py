@@ -222,12 +222,13 @@ class Loader(object):
     :param restart_on_fail: if a load fails, set up the loader again (e.g., reboot chrome)
     :param save_har: save a HAR file to the output directory
     :param save_screenshot: save a screenshot to the output directory
+    :param retries_per_trial: if a trial fails, retry this many times (beyond first)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
         user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
-        save_har=False, save_screenshot=False):
+        save_har=False, save_screenshot=False, retries_per_trial=0):
         '''Initialize a Loader object.'''
         self._outdir = outdir
         self._num_trials = num_trials
@@ -241,6 +242,7 @@ class Loader(object):
         self._restart_on_fail = restart_on_fail
         self._save_har = save_har
         self._save_screenshot = save_screenshot
+        self._retries_per_trial = retries_per_trial
 	self._proxy = proxy
         
         # cummulative list of all URLs (one per trial)
@@ -288,9 +290,11 @@ class Loader(object):
         response = None
         try:
             with Timeout(seconds = self._timeout+5):
-		'''Disabled verifying the certificate, we are only checking
-		here whether the connection is possible -Kyle'''
-                response = requests.get(url, timeout=self._timeout, verify=False) 
+                headers = {}
+                if self._user_agent:
+                    headers['User-Agent'] = self._user_agent
+                response = requests.get(url, timeout=self._timeout,\
+                    headers=headers, verify=False) 
         except requests.exceptions.ConnectionError as e:
             logging.debug('Could not connect to %s: %s', url, e)
             return False
@@ -372,14 +376,23 @@ class Loader(object):
                 # If all is well, load URL num_trials times
                 for i in range(0, self._num_trials):
                     try:
-                        result = self._load_page(url, self._outdir, i)
-                        self._urls.append(url)
-                        self._load_results[url].append(result)
-                        logging.debug(result)
+                        # if load fails, keep trying self._retries_per_trial times
+                        tries_so_far = 0
+                        while tries_so_far <= self._retries_per_trial:
+                            tries_so_far += 1
 
-                        if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
-                            self._teardown()
-                            self._setup()
+                            result = self._load_page(url, self._outdir, i)
+                            logging.debug('Trial %d, try %d: %s' % (i, tries_so_far, result))
+
+                            if result.status == LoadResult.SUCCESS:
+                                self._urls.append(url)
+                                self._load_results[url].append(result)
+                                break  # success, don't retry
+
+                            if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
+                                self._teardown()
+                                self._setup()
+
                     except Exception as e:
                         logging.exception('Error loading page %s: %s\n%s', url, e,\
                             traceback.format_exc())

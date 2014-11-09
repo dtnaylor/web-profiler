@@ -173,7 +173,7 @@ page.onError = function(msg, trace) {
 };
 
 page.onResourceError = function(resourceError) {
-    error_msg = 'Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString;
+    error_msg = 'Error code: ' + resourceError.errorCode + '. Description: ' + resourceError.errorString + '  (' + resourceError.url + ' #' + resourceError.id + ')';
 };
 
 
@@ -182,6 +182,7 @@ page.open(page.address, function (status) {
     console.log(status)
     if (status !== 'success') {
     	console.log('FAILURE:' + error_msg);
+        page.render(system.args[2])
         phantom.exit(1);
     } else {
         page.endTime = new Date();
@@ -190,9 +191,8 @@ page.open(page.address, function (status) {
             return document.title;
         });
         har = createHAR(page.address, page.title, page.startTime, page.resources);
-        console.log(JSON.stringify(har, undefined, 4));
-		console.log(system.args[2])
         page.render(system.args[2])
+        console.log(JSON.stringify(har, undefined, 4));
 		var t = page.endTime-page.startTime;
     	console.log('*=*=*=*\nSUCCESS:time=' + t + ';orig_url=' + url + ';final_url=' + page.url); // time in msec
         phantom.exit();

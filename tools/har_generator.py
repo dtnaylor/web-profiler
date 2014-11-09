@@ -29,7 +29,8 @@ def main():
     # load pages and save HARs
     if len(urls) > 0:
         loader = ChromeLoader(outdir=args.outdir, user_agent=args.useragent,\
-            num_trials=args.numtrials, restart_on_fail=True, save_har=True)
+            num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
+            retries_per_trial=1)
         loader.load_pages(urls)
 
 
