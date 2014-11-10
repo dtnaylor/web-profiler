@@ -11,6 +11,8 @@ from webloader.chrome_loader import ChromeLoader
 
 
 def main():
+    logging.info('========== HAR GENERATOR LAUNCHED ==========')
+
     # make url list
     urls = []
     if args.url_file:

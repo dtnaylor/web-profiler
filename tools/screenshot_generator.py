@@ -10,6 +10,8 @@ from webloader.phantomjs_loader import PhantomJSLoader
 
 
 def main():
+    logging.info('========== SCREENSHOT GENERATOR LAUNCHED ==========')
+
     # make url list
     urls = []
     if args.url_file:
