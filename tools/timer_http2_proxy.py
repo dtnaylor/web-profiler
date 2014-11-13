@@ -74,7 +74,7 @@ class Trial(object):
 	return os.path.join(self.directory, self.trial_hash+'.output')
 
   # Parse trial output and generate a TrialResult object
-  def getResult(self):
+  def getResultV1(self):
 	first_time = last_time = -1
 	first = True
 	req = {}
@@ -105,6 +105,43 @@ class Trial(object):
 	  logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', self.getOutput(), line, e)
 	  return None
 	return TrialResult(init_size, init_time, total_size, last_time-first_time, objs)
+
+# Parse trial output and generate a TrialResult object
+  def getResult(self):
+	first_time = last_time = -1
+	first = True
+	req = {}
+	init_time = init_size = total_time = -1
+	total_size = objs = 0
+	try:
+          with open(self.getOutput(), "r") as f:
+	    for line in f:
+	      chunks = line.rstrip().split()
+	      if len(chunks) < 2 or not chunks[0].startswith('[') or not chunks[0].endswith(']'):
+		continue
+	      time = float(chunks[0].strip('[s]'))
+
+	      if chunks[1].startswith('REQUEST='):
+		if first_time == -1:
+		  first_time = time
+		req[chunks[1].split('=')[1]] = time
+	      elif chunks[1].startswith('RESPONSE='):
+		if first:
+		  first = False
+		  rurl = chunks[1].split('=')[1]
+		  if rurl not in req:
+		    rurl = rurl.strip('/')
+		  init_time = time - req[rurl]
+		  init_size = int(chunks[2].split('=')[1])
+		total_size += int(chunks[2].split('=')[1])
+		objs += 1
+		last_time = time
+#	      elif chunks[0].startswith('LOAD_TIME'):
+#		total_time = int(float(chunks[0].split('=')[1].rstrip('s'))*1000)
+        except Exception as e:
+	  logging.error('Error processing trial output. Skipping. (%s) (%s) (%s)', self.getOutput(), line, e)
+	  return None
+	return TrialResult(init_size, int(init_time*1000), total_size, int((last_time-first_time)*1000), objs)
 
 # Accumulated results for a URL
 class URLStat(object):
@@ -150,8 +187,6 @@ class URLResult(object):
 	result = URLStat(self.url)
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
-		if args.all:
-			print 'ALL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 		if not r or r.InitSize == -1 or r.TotalSize == -1: # Ignore trials where the root object was not downloaded
 			continue
 		result.sum_init_time.append(r.InitTime)
@@ -160,6 +195,8 @@ class URLResult(object):
 		result.sum_size.append(r.TotalSize)
 		result.objs.append(r.Objects)
 		result.r.append(r)
+		if args.all:
+			print 'ALL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 	return result
 
 # Process output of all trials for all URLS stored in file system  and output the analyzed results
