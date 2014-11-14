@@ -40,7 +40,7 @@ class Mock(object):
         else:
             return Mock()
 
-MOCK_MODULES = ['numpy', 'selenium',
+MOCK_MODULES = ['numpy', 'selenium', 'requests',
     'selenium.common',
     'selenium.common.exceptions',
     'selenium.webdriver',
