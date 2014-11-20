@@ -39,12 +39,25 @@ def process_results():
             res[url].add_to_results(results[url])
 
   for url, result in results.iteritems():
-    analyzeResult(getResult(result, True, EC2_SERVER+':'+NGHTTP2_PROXY, 'NGHTTP2'),\
-	          getResult(result, False, EC2_SERVER+':'+NGHTTP2_SERVER, 'NGHTTP2'),\
-	          'NGHTTP2')
-    analyzeResult(getResult(result, True, EC2_SERVER+':'+NODEJS_PROXY, 'NODEJS'),\
-    		  getResult(result, False, EC2_SERVER+':'+NODEJS_SERVER, 'NODEJS'),\
-		  'NDOEJS')
+     for trial in result.proxy_trials:
+       r = trial.getResult()
+       if not r or r.InitSize == -1 or r.TotalSize == -1: # Ignore trials where the root object was not downloaded
+	  continue
+       print trial.proxy, r.InitTime
+     for trial in result.noproxy_trials:
+       r = trial.getResult()
+       if not r or r.InitSize == -1 or r.TotalSize == -1: # Ignore trials where the root object was not downloaded
+	  continue
+       print trial.proxy, r.InitTime
+
+
+#   for url, result in results.iteritems():
+#    analyzeResult(getResult(result, True, EC2_SERVER+':'+NGHTTP2_PROXY, 'NGHTTP2'),\
+#	          getResult(result, False, EC2_SERVER+':'+NGHTTP2_SERVER, 'NGHTTP2'),\
+#	          'NGHTTP2')
+#    analyzeResult(getResult(result, True, EC2_SERVER+':'+NODEJS_PROXY, 'NODEJS'),\
+#    		  getResult(result, False, EC2_SERVER+':'+NODEJS_SERVER, 'NODEJS'),\
+#		  'NODEJS')
     
 
 def getResult(res, wproxy = True, proxy = None, code = ''):
