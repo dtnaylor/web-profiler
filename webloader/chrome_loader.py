@@ -84,7 +84,11 @@ class ChromeLoader(Loader):
                 logging.debug('Starting XVFB: %s', xvfb_command)
                 self._xvfb_proc = subprocess.Popen(xvfb_command.split())
                 sleep(2)
-                # TODO: check return status (e.g., env could fail to find xvfb)
+
+                # check if Xvfb failed to start and process terminated
+                retcode = self._xvfb_proc.poll()
+                if retcode != None:
+                    raise("Xvfb proc exited with return code: %i" % retcode)
             except Exception as e:
                 logging.exception("Error starting XFVB")
                 return False
@@ -105,7 +109,11 @@ class ChromeLoader(Loader):
             logging.debug('Starting Chrome: %s', chrome_command)
             self._chrome_proc = subprocess.Popen(chrome_command.split())
             sleep(5)
-            # TODO: check return status (e.g., env could fail to find chrome)
+                
+            # check if Xvfb failed to start and process terminated
+            retcode = self._chrome_proc.poll()
+            if retcode != None:
+                raise("Chrome proc exited with return code: %i" % retcode)
         except Exception as e:
             logging.exception("Error starting Chrome")
             return False
@@ -118,6 +126,13 @@ class ChromeLoader(Loader):
             logging.debug('Stopping Chrome')
             self._chrome_proc.kill()
             self._chrome_proc.wait()
+
+        # kill any subprocesses chrome might have opened
+        try:
+            subprocess.check_output('killall chrome'.split())
+        except Exception as e:
+            logging.debug('Problem killing all chrome processes (maybe there were none): %s' % e)
+
         if self._xvfb_proc:
             logging.debug('Stopping XVFB')
             self._xvfb_proc.kill()

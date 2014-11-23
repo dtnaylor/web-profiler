@@ -275,6 +275,7 @@ class Loader(object):
 
         return url
 
+    # TODO: handle sites that sometimes return HTTP and sometimes HTTPS (YouTube)
     def _check_protocol_available(self, url):
         '''Check if the URL can be loaded over the specified protocol.
 
@@ -388,6 +389,10 @@ class Loader(object):
                                 self._urls.append(url)
                                 self._load_results[url].append(result)
                                 break  # success, don't retry
+                            elif tries_so_far > self._retries_per_trial:
+                                # this was the last try, record the failure
+                                self._urls.append(url)
+                                self._load_results[url].append(result)
 
                             if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
                                 self._teardown()

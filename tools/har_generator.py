@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import argparse
+import pickle
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from webloader.phantomjs_loader import PhantomJSLoader
@@ -34,6 +35,14 @@ def main():
             num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
             retries_per_trial=1)
         loader.load_pages(urls)
+
+        # pickle load results
+        try:
+            with open(os.path.join(args.outdir, 'har_generator_results.pickle'), 'w') as f:
+                pickle.dump(loader, f)
+            f.closed
+        except:
+            logging.exception('Error saving pickled results.')
 
 
 
