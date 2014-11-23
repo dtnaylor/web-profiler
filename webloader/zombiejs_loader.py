@@ -45,7 +45,7 @@ class ZombieJSLoader(Loader):
 	    #	resp = conn.getresponse() # Don't need to do anything with it. Just want to know that the request was acknowledge
 
             # Load the page
-            Zombie_cmd = [ENV, ZombieJS, ZombieLOADER, url, str(self._timeout)]
+            Zombie_cmd = [ENV, ZombieJS, ZombieLOADER, url, '-t', str(self._timeout), '-v']
 	    if self._proxy:
 		Zombie_cmd.append('-p')
                 Zombie_cmd.append(self._proxy)

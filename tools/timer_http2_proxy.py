@@ -183,7 +183,7 @@ class URLResult(object):
 		results.add_trial(trial)
 
     # Parse the output of all trials in the experiment and generate a URLStat result
-    def getResult(self, wproxy = True):
+    def getResult(self, wproxy = True, pall = True):
 	result = URLStat(self.url)
 	for trial in (self.proxy_trials if wproxy else self.noproxy_trials):
 		r = trial.getResult()
@@ -195,17 +195,29 @@ class URLResult(object):
 		result.sum_size.append(r.TotalSize)
 		result.objs.append(r.Objects)
 		result.r.append(r)
-		if args.all:
+		if pall:
 			print 'ALL', self.url, 'YESPROXY' if wproxy else 'NOPROXY', r.toString()
 	return result
 
 # Process output of all trials for all URLS stored in file system  and output the analyzed results
-def process_results(results):
+def process_results(dirs, pall = True):
+  results = {}
+  for directory in dirs:
+    result_files = glob.glob(os.path.join(directory, 'round.*.result'))
+    for result_file in result_files:
+      with open(result_file, 'r') as f:
+        res = cPickle.load(f)
+        for url in res:
+          if url not in results:
+            results[url] = res[url]
+          else:
+            res[url].add_to_results(results[url])
+
   for url, result in results.iteritems():
-    analyzeResult(result.getResult(True), result.getResult(False))
+    analyzeResult(result.getResult(True, pall), result.getResult(False, pall))
 
 # Analyze a specific URL result
-def analyzeResult(proxy, noproxy):
+def analyzeResult(proxy, noproxy, code = ''):
   while True:
   	objs = proxy.objs + noproxy.objs
   	if len(objs) == 0:
@@ -225,13 +237,13 @@ def analyzeResult(proxy, noproxy):
 	proxy.subset(indices)  
 
         for r in proxy.r:
-	  print 'TRIAL', proxy.url, 'YESPROXY', r.toString()
+	  print 'TRIAL', code, proxy.url, 'YESPROXY', r.toString()
 
-  	print 'FINAL_MEAN', proxy.url, 'YESPROXY',\
+  	print 'FINAL_MEAN', code, proxy.url, 'YESPROXY',\
 	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.mean(proxy.sum_init_size),\
 	  numpy.mean(proxy.sum_init_time), numpy.mean(proxy.sum_size), numpy.mean(proxy.sum_time), mode, len(indices))
 
-	print 'FINAL_MEDIAN', proxy.url, 'YESPROXY',\
+	print 'FINAL_MEDIAN', code, proxy.url, 'YESPROXY',\
 	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(proxy.sum_init_size),\
 	  numpy.median(proxy.sum_init_time), numpy.median(proxy.sum_size), numpy.median(proxy.sum_time), mode, len(indices))
 
@@ -241,13 +253,13 @@ def analyzeResult(proxy, noproxy):
 	noproxy.subset(indices)  
 
         for r in noproxy.r:
-	  print 'TRIAL', noproxy.url, 'NOPROXY', r.toString()
+	  print 'TRIAL', code, noproxy.url, 'NOPROXY', r.toString()
 
-  	print 'FINAL_MEAN', noproxy.url, 'NOPROXY',\
+  	print 'FINAL_MEAN', code, noproxy.url, 'NOPROXY',\
 	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.mean(noproxy.sum_init_size),\
 	  numpy.mean(noproxy.sum_init_time), numpy.mean(noproxy.sum_size), numpy.mean(noproxy.sum_time), mode, len(indices))
 
-	print 'FINAL_MEDIAN', noproxy.url, 'NOPROXY',\
+	print 'FINAL_MEDIAN', code, noproxy.url, 'NOPROXY',\
 	  'rootSize=%s rootTime=%s totalSize=%s totalTime=%s objects=%s trials=%s' % (numpy.median(noproxy.sum_init_size),\
 	  numpy.median(noproxy.sum_init_time), numpy.median(noproxy.sum_size), numpy.median(noproxy.sum_time), mode, len(indices))
 
@@ -285,13 +297,13 @@ def make_url(url, protocol, port=None):
 def id_generator(size=15, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
-def fetch_url(url, proxy):
+def fetch_url(url, proxy, outdir, timeout):
   url = make_url(url, 'https')
 
   while True:
     trial_hash = id_generator()
-    dump_file = os.path.join(args.outdir,trial_hash+'.pcap')
-    output_file = os.path.join(args.outdir,trial_hash+'.output')
+    dump_file = os.path.join(outdir,trial_hash+'.pcap')
+    output_file = os.path.join(outdir,trial_hash+'.output')
     if not os.path.isfile(dump_file) and not os.path.isfile(output_file):
 	break
 
@@ -313,10 +325,10 @@ def fetch_url(url, proxy):
   #  time.sleep(5)
   #  return None
 
-  loader = ZombieJSLoader(outdir=args.outdir, num_trials=1,\
+  loader = ZombieJSLoader(outdir=outdir, num_trials=1,\
     	disable_local_cache=True, http2=True,\
-    	timeout=args.timeout, full_page=True, proxy= args.proxy if proxy else args.proxy_ip+':6789')
-  result = loader._load_page(url, args.outdir)
+    	timeout=timeout, full_page=True, proxy= proxy)
+  result = loader._load_page(url, outdir)
 
   if tcpdump_proc:
     logging.debug('Stopping tcpdump')
@@ -341,18 +353,7 @@ def main():
 
     # Processing already collected results
     if args.process:
-	results = {}
-	for directory in args.process:
-        	result_files = glob.glob(os.path.join(directory, 'round.*.result'))
-	        for result_file in result_files:
-        	    with open(result_file, 'r') as f:
-        	        res = cPickle.load(f)
-			for url in res:
-				if url not in results:
-					results[url] = res[url]
-				else:
-					res[url].add_to_results(results[url])
-	process_results(results)
+	process_results(args.process)
     # Running an experiment
     else:
         if args.urlfile:
@@ -369,12 +370,12 @@ def main():
 
 	  for i in range(args.numtrials):
 	    # With Proxy
-	    trial_hash = fetch_url(url, True)
+	    trial_hash = fetch_url(url, args.proxy, args.outdir, args.timeout)
 	    if trial_hash != None:
 		results[url].add_trial(Trial(trial_hash, args.outdir, True))
 		at_least_1_success = True
 	    # Without Proxy
-	    trial_hash = fetch_url(url, False)
+	    trial_hash = fetch_url(url, args.proxy_ip+':6789', args.outdir, args.timeout) # Server always at port 6789
 	    if trial_hash != None:
 		results[url].add_trial(Trial(trial_hash, args.outdir, False))
 		at_least_1_success = True
