@@ -216,20 +216,29 @@ class Loader(object):
     :param timeout: timeout in seconds
     :param disable_local_cache: disable the local browser cache (RAM and disk)
     :param disable_network_cache: send "Cache-Control: max-age=0" header
-    :param full_page: load page's subresources and render; if False, only the object is fetched
+    :param full_page: load page's subresources and render; if False, only the
+        object is fetched
     :param user_agent: use custom user agent; if None, use browser's default
     :param headless: don't use GUI (if there normally is one -- e.g., browsers)
-    :param restart_on_fail: if a load fails, set up the loader again (e.g., reboot chrome)
+    :param restart_on_fail: if a load fails, set up the loader again (e.g.,
+        reboot chrome)
     :param save_har: save a HAR file to the output directory
     :param save_screenshot: save a screenshot to the output directory
-    :param retries_per_trial: if a trial fails, retry this many times (beyond first)
+    :param retries_per_trial: if a trial fails, retry this many times (beyond
+        first)
+    :param stdout_filename: if the loader launches other procs (e.g., browser),
+        send their stdout and stderr to this file. If None, use parent proc's
+        stdout and stderr.
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
         user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
-        save_har=False, save_screenshot=False, retries_per_trial=0):
+        save_har=False, save_screenshot=False, retries_per_trial=0,\
+        stdout_filename=None):
         '''Initialize a Loader object.'''
+
+        # options
         self._outdir = outdir
         self._num_trials = num_trials
         self._http2 = http2
@@ -243,7 +252,8 @@ class Loader(object):
         self._save_har = save_har
         self._save_screenshot = save_screenshot
         self._retries_per_trial = retries_per_trial
-	self._proxy = proxy
+        self._stdout_filename = stdout_filename
+        self._proxy = proxy
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
@@ -255,6 +265,12 @@ class Loader(object):
         # Map URLs to PageResults (there is only one PageResult per URL; it
         # summarizes the LoadResults for the individual trials)
         self._page_results = {}
+
+        # count how many times we restarted the loader due to failure
+        self._num_restarts = 0
+
+        # if self._stdout_filename is set, this var will hold the file object
+        self._stdout_file = None
 
     
 
@@ -345,6 +361,12 @@ class Loader(object):
     def page_results(self):
         '''A dict mapping URLs to a :class:`PageResult`.'''
         return self._page_results
+
+    @property
+    def num_restarts(self):
+        '''Number of times the loader was restarted (e.g., rebooted browser
+        process) due to failures if restart_on_fail is True.'''
+        return self._num_restarts
     
     
 
@@ -397,6 +419,7 @@ class Loader(object):
                             if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
                                 self._teardown()
                                 self._setup()
+                                self._num_restarts += 1
 
                     except Exception as e:
                         logging.exception('Error loading page %s: %s\n%s', url, e,\

@@ -33,7 +33,7 @@ def main():
     if len(urls) > 0:
         loader = ChromeLoader(outdir=args.outdir, user_agent=args.useragent,\
             num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
-            retries_per_trial=1)
+            retries_per_trial=1, stdout_filename=args.stdoutfile)
         loader.load_pages(urls)
 
         # pickle load results
@@ -58,6 +58,7 @@ if __name__ == "__main__":
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
     parser.add_argument('-g', '--logfile', default=None, help='Path for log file.')
+    parser.add_argument('-t', '--stdoutfile', default=None, help='Log file path for loader\'s stdout and stderr.')
     args = parser.parse_args()
 
     if not os.path.isdir(args.outdir):

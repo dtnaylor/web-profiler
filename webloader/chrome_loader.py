@@ -59,7 +59,8 @@ class ChromeLoader(Loader):
             capturer_cmd = '%s -o %s %s' % (CHROME_HAR_CAPTURER, harpath, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
-                subprocess.check_output(capturer_cmd.split(), stderr=subprocess.STDOUT)
+                subprocess.check_output(capturer_cmd.split(),\
+                    stdout=self._stdout_file, stderr=subprocess.STDOUT)
         
         except TimeoutError:
             logging.exception('* Timeout fetching %s', url)
@@ -76,13 +77,26 @@ class ChromeLoader(Loader):
 
 
     def _setup(self):
+        stdout = None
+        stderr = None
+        if self._stdout_filename:
+            try:
+                self._stdout_file = open(self._stdout_filename, 'a')
+            except:
+                logging.exception('Error opening stdout file: %s. Using parent\'s stdout.',\
+                    self._stdout_filename)
+                self._stdout_file = None
+            stdout = self._stdout_file
+            stderr = self._stdout_file
+
         if self._headless:
             # start a virtual display
             try:
                 os.environ['DISPLAY'] = DISPLAY
                 xvfb_command = '%s %s -screen 0 1366x768x24 -ac' % (XVFB, DISPLAY)
                 logging.debug('Starting XVFB: %s', xvfb_command)
-                self._xvfb_proc = subprocess.Popen(xvfb_command.split())
+                self._xvfb_proc = subprocess.Popen(xvfb_command.split(),\
+                    stdout=stdout, stderr=stderr)
                 sleep(2)
 
                 # check if Xvfb failed to start and process terminated
@@ -107,7 +121,8 @@ class ChromeLoader(Loader):
 
             chrome_command = '%s %s' % (CHROME, options)
             logging.debug('Starting Chrome: %s', chrome_command)
-            self._chrome_proc = subprocess.Popen(chrome_command.split())
+            self._chrome_proc = subprocess.Popen(chrome_command.split(),\
+                stdout=stdout, stderr=stderr)
             sleep(5)
                 
             # check if Xvfb failed to start and process terminated
@@ -131,9 +146,12 @@ class ChromeLoader(Loader):
         try:
             subprocess.check_output('killall chrome'.split())
         except Exception as e:
-            logging.debug('Problem killing all chrome processes (maybe there were none): %s' % e)
+            logging.warning('Problem killing all chrome processes (maybe there were none): %s' % e)
 
         if self._xvfb_proc:
             logging.debug('Stopping XVFB')
             self._xvfb_proc.kill()
             self._xvfb_proc.wait()
+
+        if self._stdout_file:
+            self._stdout_file.close()

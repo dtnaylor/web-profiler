@@ -110,3 +110,8 @@ class PhantomJSLoader(Loader):
         except Exception as e:
             logging.exception('Error loading %s: %s\n%s' % (url, e, traceback.format_exc()))
             return LoadResult(LoadResult.FAILURE_UNKNOWN, url)
+        finally:
+            try:
+                subprocess.check_output('killall phantomjs'.split())
+            except Exception as e:
+                logging.warning('Error killing phantomjs (process might not exist): %s', e)
