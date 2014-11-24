@@ -340,6 +340,12 @@ class Loader(object):
         '''Subclasses can override to clean up (e.g., kill Xvfb)'''
         return True
 
+    def __getstate__(self):
+        '''override getstate so we don't try to pickle the stdout file object'''
+        state = dict(self.__dict__)
+        del state['_stdout_file']
+        return state
+
 
 
 
