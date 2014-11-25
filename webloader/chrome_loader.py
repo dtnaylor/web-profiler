@@ -59,7 +59,7 @@ class ChromeLoader(Loader):
             capturer_cmd = '%s -o %s %s' % (CHROME_HAR_CAPTURER, harpath, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
-                subprocess.check_output(capturer_cmd.split(),\
+                subprocess.check_call(capturer_cmd.split(),\
                     stdout=self._stdout_file, stderr=subprocess.STDOUT)
         
         except TimeoutError:
