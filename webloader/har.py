@@ -16,6 +16,9 @@ CACHE_CONTROL_CACHEABLE = ('public', 'max-age', 's-maxage', 'must-revalidate',\
                            'proxy-revalidate', 'no-transform')
 CACHE_CONTROL_NOT_CACHEABLE = ('private', 'no-cache', 'no-store')
 
+class HarError(Exception):
+    pass
+
 class HarObject(object):
     '''Encapsulates a single HAR request'''
 
@@ -125,32 +128,36 @@ class HarObject(object):
 
     def _get_explicitly_cacheable(self):
         '''Based on response headers, is this cacheable?'''
-        if 'Expires' in self.response_headers:
-            if self.response_headers['Expires'] in ['0', '-1']:
+        try:
+            if 'Expires' in self.response_headers:
+                if self.response_headers['Expires'] in ['0', '-1']:
+                    return False
+                elif 'Date' in self.response_headers:
+                    try:
+                        expires = time.strptime(self.response_headers['Expires'][:-4].replace('-', ' '),\
+                            '%a, %d %b %Y %H:%M:%S')
+                        date = time.strptime(self.response_headers['Date'][:-4].replace('-', ' '),\
+                            '%a, %d %b %Y %H:%M:%S')
+                        return expires > date
+                    except:
+                        logging.getLogger(__name__).warn('Error parsing date')
+                        pass
+            elif 'Cache-Control' in self.response_headers:
+                if any(t in self.response_headers['Cache-Control'] for t in CACHE_CONTROL_NOT_CACHEABLE):
+                    return False
+                elif 'max-age=' in self.response_headers['Cache-Control']:
+                    max_age = int(self.response_headers['Cache-Control'].split('max-age=')[-1].split(',')[0])
+                    return max_age > 0
+                elif 's-maxage=' in self.response_headers['Cache-Control']:
+                    max_age = int(self.response_headers['Cache-Control'].split('s-maxage=')[1].split(',')[0])
+                    return max_age > 0
+                elif any(t in self.response_headers['Cache-Control'] for t in CACHE_CONTROL_CACHEABLE):
+                    return True
+            else:
                 return False
-            elif 'Date' in self.response_headers:
-                try:
-                    expires = time.strptime(self.response_headers['Expires'][:-4].replace('-', ' '),\
-                        '%a, %d %b %Y %H:%M:%S')
-                    date = time.strptime(self.response_headers['Date'][:-4].replace('-', ' '),\
-                        '%a, %d %b %Y %H:%M:%S')
-                    return expires > date
-                except:
-                    logging.getLogger(__name__).warn('Error parsing date')
-                    pass
-        elif 'Cache-Control' in self.response_headers:
-            if any(t in self.response_headers['Cache-Control'] for t in CACHE_CONTROL_NOT_CACHEABLE):
-                return False
-            elif 'max-age=' in self.response_headers['Cache-Control']:
-                max_age = int(self.response_headers['Cache-Control'].split('max-age=')[1].split(',')[0])
-                return max_age > 0
-            elif 's-maxage=' in self.response_headers['Cache-Control']:
-                max_age = int(self.response_headers['Cache-Control'].split('s-maxage=')[1].split(',')[0])
-                return max_age > 0
-            elif any(t in self.response_headers['Cache-Control'] for t in CACHE_CONTROL_CACHEABLE):
-                return True
-        else:
-            return False
+        except Exception as e:
+            logging.warn('Error parsing Cache-Control or Expires header: %s', e)
+        return False  # if there was an error, just say not cacheable
     explicitly_cacheable = property(_get_explicitly_cacheable) 
 
     def _get_implicitly_cacheable(self):
@@ -176,6 +183,9 @@ class Har(object):
     '''Encapsulates an HTTP Archive (HAR)'''
 
     def __init__(self, har_json):
+        if har_json['log']['pages'] == [] or har_json['log']['entries'] == []:
+            raise HarError('HAR is empty: %s' % har_json)
+
         self.data = har_json
         self.object_lists = defaultdict(list)
         self._hosts = set()
@@ -195,37 +205,40 @@ class Har(object):
         self._total_handshake_ms = 0
 
         for obj_json in self.data['log']['entries']:
-            obj = HarObject(obj_json)
-            if not obj.sanity_check(print_report=False): continue
-            #print '%d\t%s (%s)\t%s' % (obj.size, obj.mime_type, obj.category, obj.domain)
+            try:
+                obj = HarObject(obj_json)
+                if not obj.sanity_check(print_report=False): continue
+                #print '%d\t%s (%s)\t%s' % (obj.size, obj.mime_type, obj.category, obj.domain)
 
-            self.object_lists[obj.category].append(obj)
-            self._hosts.add(obj.host)
+                self.object_lists[obj.category].append(obj)
+                self._hosts.add(obj.host)
 
-            self._num_objects += 1
-            self._num_bytes += obj.size
+                self._num_objects += 1
+                self._num_bytes += obj.size
 
-            if obj.protocol == 'http':
-                self._num_http_objects += 1
-            elif obj.protocol == 'https':
-                self._num_https_objects += 1
+                if obj.protocol == 'http':
+                    self._num_http_objects += 1
+                elif obj.protocol == 'https':
+                    self._num_https_objects += 1
 
-            if obj.explicitly_cacheable:
-                self._num_explicitly_cacheable_objects += 1
-                self._num_explicitly_cacheable_bytes += obj.size
-            if obj.implicitly_cacheable:
-                self._num_implicitly_cacheable_objects += 1
-                self._num_implicitly_cacheable_bytes += obj.size
-            if obj.tcp_handshake:
-                self._num_tcp_handshakes += 1
-            if obj.ssl_handshake:
-                self._num_ssl_handshakes += 1
-            if obj.timings['connect'] >= 0:
-                self._total_tcp_handshake_ms += obj.timings['connect']
-                self._total_handshake_ms += obj.timings['connect']
-            if obj.timings['ssl'] >= 0:
-                self._total_ssl_handshake_ms += obj.timings['ssl']
-                self._total_handshake_ms += obj.timings['ssl']
+                if obj.explicitly_cacheable:
+                    self._num_explicitly_cacheable_objects += 1
+                    self._num_explicitly_cacheable_bytes += obj.size
+                if obj.implicitly_cacheable:
+                    self._num_implicitly_cacheable_objects += 1
+                    self._num_implicitly_cacheable_bytes += obj.size
+                if obj.tcp_handshake:
+                    self._num_tcp_handshakes += 1
+                if obj.ssl_handshake:
+                    self._num_ssl_handshakes += 1
+                if obj.timings['connect'] >= 0:
+                    self._total_tcp_handshake_ms += obj.timings['connect']
+                    self._total_handshake_ms += obj.timings['connect']
+                if obj.timings['ssl'] >= 0:
+                    self._total_ssl_handshake_ms += obj.timings['ssl']
+                    self._total_handshake_ms += obj.timings['ssl']
+            except Exception as e:
+                logging.warn('Error parsing HAR object:\n%s', obj_json)
 
 
     def sanity_check(self):
