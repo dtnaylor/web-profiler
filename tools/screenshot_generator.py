@@ -27,12 +27,20 @@ def main():
         logging.getLogger(__name__).error('No URLs were specified.')
         sys.exit(-1)
 
-    # load pages and save HARs
+    # load pages and save screenshots
     if len(urls) > 0:
         loader = PhantomJSLoader(outdir=args.outdir, user_agent=args.useragent,\
             num_trials=args.numtrials, restart_on_fail=True, save_screenshot=True,\
             retries_per_trial=3)
         loader.load_pages(urls)
+        
+        # pickle load results
+        try:
+            with open(os.path.join(args.outdir, 'screenshot_generator_results.pickle'), 'w') as f:
+                pickle.dump(loader, f)
+            f.closed
+        except:
+            logging.exception('Error saving pickled results.')
 
 
 
