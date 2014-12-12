@@ -4,6 +4,7 @@ import os
 import sys
 import logging
 import argparse
+import pickle
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from webloader.phantomjs_loader import PhantomJSLoader
