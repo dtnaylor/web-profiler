@@ -6,6 +6,7 @@ import re
 import logging
 import argparse
 import time
+import datetime
 import pprint
 from urlparse import urlparse
 from collections import defaultdict
@@ -50,8 +51,9 @@ class HarObject(object):
         if self.category == 'unknown' and self.size > 0:
             report += '-> Object of unknown type %s has nonzero size %d' % (self.mime_type, self.size)
 
-        if self.body_size != self.content_size:
-            report += '-> Body size (%d) does not match content size (%d)\n' % (self.body_size, self.content_size)
+        if self.content_size - self.content_compression != self.body_size:
+            report += '-> Body size (%d) does not match content size (%d) minus compression (%d)\n'\
+                % (self.body_size, self.content_size, self.content_compresion)
 
         if report != '' and print_report:
             print '\n========== SANITY CHECK REPORT ==========\n'
@@ -95,30 +97,43 @@ class HarObject(object):
             return 'unknown'
     category = property(_get_category)
 
-    def _get_url(self):
+    @property
+    def url(self):
         return self.json['request']['url']
-    url = property(_get_url)
 
-    def _get_host(self):
+    @property
+    def host(self):
         return urlparse(self.url).netloc
-    host = property(_get_host)
 
-    def _get_filename(self):
+    @property
+    def path(self):
+        return urlparse(self.url).path
+
+    @property
+    def filename(self):
         return self.url.split('/')[-1]
-    filename = property(_get_filename)
 
     def _get_protocol(self):
         return self.url.split('://')[0]
     protocol = property(_get_protocol)
 
+    @property
+    def object_start_time(self):
+        return datetime.datetime.strptime(\
+            self.json['startedDateTime'], '%Y-%m-%dT%H:%M:%S.%fZ') 
+
     def _get_timings(self):
         return self.json['timings']
     timings = property(_get_timings)
 
-    def _get_content_size(self):
+    @property
+    def content_size(self):
         content_size = int(self.json['response']['content']['size'])
         return content_size
-    content_size = property(_get_content_size)
+
+    @property
+    def content_compression(self):
+        return int(self.json['response']['content']['compression'])
 
     def _get_body_size(self):
         body_size = int(self.json['response']['bodySize'])
@@ -187,8 +202,12 @@ class Har(object):
             raise HarError('HAR is empty: %s' % har_json)
 
         self.data = har_json
+        self.objects = []  # all objects, in order
         self.object_lists = defaultdict(list)
         self._hosts = set()
+        self.page_start_time = datetime.datetime.strptime(\
+            self.data['log']['pages'][0]['startedDateTime'],\
+            '%Y-%m-%dT%H:%M:%S.%fZ')
 
         self._num_objects = 0
         self._num_bytes = 0
@@ -210,6 +229,7 @@ class Har(object):
                 if not obj.sanity_check(print_report=False): continue
                 #print '%d\t%s (%s)\t%s' % (obj.size, obj.mime_type, obj.category, obj.domain)
 
+                self.objects.append(obj)
                 self.object_lists[obj.category].append(obj)
                 self._hosts.add(obj.host)
 
@@ -280,10 +300,6 @@ class Har(object):
 
     def get_objects(self, obj_type):
         return self.object_lists[obj_type]
-
-    def _get_all_objects(self):
-        return sum(self.object_lists.values(), [])
-    objects = property(_get_all_objects)
 
     def _get_hosts(self):
         return self._hosts
