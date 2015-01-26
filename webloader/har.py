@@ -123,6 +123,10 @@ class HarObject(object):
     protocol = property(_get_protocol)
 
     @property
+    def response_code(self):
+        return int(self.json['response']['status'])
+
+    @property
     def object_start_time(self):
         return datetime.datetime.strptime(\
             self.json['startedDateTime'], '%Y-%m-%dT%H:%M:%S.%fZ') 
