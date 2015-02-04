@@ -6,6 +6,8 @@ import logging
 import argparse
 import pickle
 
+from logging import handlers
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from webloader.phantomjs_loader import PhantomJSLoader
 from webloader.chrome_loader import ChromeLoader
@@ -75,12 +77,19 @@ if __name__ == "__main__":
         level = logging.DEBUG
     else:
         level = logging.INFO
+    logfmt = "%(levelname) -10s %(asctime)s %(module)s:%(lineno) -7s %(message)s"
     config = {
-        'format' : "%(levelname) -10s %(asctime)s %(module)s:%(lineno) -7s %(message)s",
+        'format' : logfmt,
         'level' : level
     }
-    if args.logfile:
-        config['filename'] = args.logfile
     logging.basicConfig(**config)
+    #if args.logfile:
+    #    config['filename'] = args.logfile
+    if args.logfile:
+        handler = handlers.RotatingFileHandler(args.logfile,\
+            maxBytes=10*1024*1024, backupCount=3)
+        logging.getLogger('').addHandler(handler)
+        handler.setFormatter(logging.Formatter(fmt=logfmt))
+        handler.setLevel(level)
 
     main()
