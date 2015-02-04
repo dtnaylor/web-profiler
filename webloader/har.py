@@ -26,16 +26,21 @@ class HarObject(object):
     def __init__(self, object_json):
         self.json = object_json
 
-        # make a dict for the response headers
-        # FIXME: don't discard multiple headers of same type
-        self.response_headers = {}
-        for header in self.json['response']['headers']:
-            if header['name'] in self.response_headers:
-                logging.getLogger(__name__)\
-                    .debug('Header "%s" already exists in this response.',
-                    header['name'])
-            else:
-                self.response_headers[header['name']] = header['value']
+        def process_headers(headers):
+            # FIXME: don't discard multiple headers of same type
+            header_dict = {}
+            for header in headers:
+                if header['name'] in header_dict:
+                    logging.getLogger(__name__)\
+                        .debug('Header "%s" already exists in this response.',
+                        header['name'])
+                else:
+                    header_dict[header['name']] = header['value']
+            return header_dict
+
+        # make dicts for request and response headers
+        self.request_headers = process_headers(self.json['request']['headers'])
+        self.response_headers = process_headers(self.json['response']['headers'])
 
     def sanity_check(self, print_report=True):
         report = ''
@@ -118,6 +123,10 @@ class HarObject(object):
     protocol = property(_get_protocol)
 
     @property
+    def response_code(self):
+        return int(self.json['response']['status'])
+
+    @property
     def object_start_time(self):
         return datetime.datetime.strptime(\
             self.json['startedDateTime'], '%Y-%m-%dT%H:%M:%S.%fZ') 
@@ -125,6 +134,18 @@ class HarObject(object):
     def _get_timings(self):
         return self.json['timings']
     timings = property(_get_timings)
+
+    @property
+    def request_headers_size(self):
+        return int(self.json['request']['headersSize'])
+
+    @property
+    def request_body_size(self):
+        return int(self.json['request']['bodySize'])
+
+    @property
+    def response_headers_size(self):
+        return int(self.json['response']['headersSize'])
 
     @property
     def content_size(self):
@@ -138,6 +159,7 @@ class HarObject(object):
     def _get_body_size(self):
         body_size = int(self.json['response']['bodySize'])
         return body_size
+    response_body_size = property(_get_body_size)
     body_size = property(_get_body_size)
     size = property(_get_body_size)
 
