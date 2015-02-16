@@ -8,6 +8,7 @@ import argparse
 import time
 import datetime
 import pprint
+import numpy
 from urlparse import urlparse
 from collections import defaultdict
 
@@ -226,6 +227,7 @@ class Har(object):
         self.data = har_json
         self.objects = []  # all objects, in order
         self.object_lists = defaultdict(list)
+        self._sizes = []  # all object sizes, for computing mean/median
         self._hosts = set()
         self.page_start_time = datetime.datetime.strptime(\
             self.data['log']['pages'][0]['startedDateTime'],\
@@ -253,6 +255,7 @@ class Har(object):
 
                 self.objects.append(obj)
                 self.object_lists[obj.category].append(obj)
+                self._sizes.append(obj.size)
                 self._hosts.add(obj.host)
 
                 self._num_objects += 1
@@ -353,6 +356,14 @@ class Har(object):
         return self.num_bytes / 1000000.0
     num_mbytes = property(_get_num_mbytes)
 
+    @property
+    def mean_object_size(self):
+        return numpy.mean(self._sizes)
+
+    @property
+    def median_object_size(self):
+        return numpy.median(self._sizes)
+
     def _get_num_explicitly_cacheable_objects(self):
         return self._num_explicitly_cacheable_objects
     num_explicitly_cacheable_objects = property(_get_num_explicitly_cacheable_objects)
@@ -404,6 +415,8 @@ class Har(object):
             profile['num-bytes-by-type'][t] = self.get_num_bytes_by_type(t)
         profile['num-objects'] = self.num_objects
         profile['num-bytes'] = self.num_bytes
+        profile['mean-object-size'] = self.mean_object_size
+        profile['median-object-size'] = self.median_object_size
         profile['num-explicitly-cacheable-objects'] = self.num_explicitly_cacheable_objects
         profile['num-explicitly-cacheable-bytes'] = self.num_explicitly_cacheable_bytes
         profile['num-implicitly-cacheable-objects'] = self.num_implicitly_cacheable_objects
