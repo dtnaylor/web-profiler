@@ -26,6 +26,12 @@ Loaders
 .. autoclass:: webloader.curl_loader.CurlLoader
 	:members:
 
+.. autoclass:: webloader.nodejs_loader.NodeJsLoader
+	:members:
+
+.. autoclass:: webloader.tcp_loader.TCPLoader
+	:members:
+
 
 Results
 -------

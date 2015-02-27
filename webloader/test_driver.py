@@ -11,13 +11,15 @@ from firefox_loader import FirefoxLoader
 from pythonrequests_loader import PythonRequestsLoader
 from curl_loader import CurlLoader
 from nodejs_loader import NodeJsLoader
+from tcp_loader import TCPLoader
 
 def main():
     #loader = NodeJsLoader(num_trials=1, full_page=False, http2=True)
     #loader = CurlLoader(num_trials=1, full_page=False)
     #loader = PythonRequestsLoader(num_trials=1)
-    loader = FirefoxLoader(num_trials=1, headless=False, selenium=False)
+    #loader = FirefoxLoader(num_trials=1, headless=False, selenium=False)
     #loader = PhantomJSLoader(num_trials=5)
+    loader = TCPLoader(num_trials=1, full_page=False)
     loader.load_pages(['http://www.cnn.com'])
     print loader.urls
     pprint.pprint(loader.load_results)

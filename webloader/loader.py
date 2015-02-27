@@ -48,6 +48,8 @@ class LoadResult(object):
     :param size: ???
     :param har: Path to the HAR file.
     :param img: Path to a screenshot of the loaded page.
+    :param tcp_fast_open_supported: True if TCP fast open was used successfully;
+        False otherwise or unknown
     '''
     
     # Status constants
@@ -58,7 +60,7 @@ class LoadResult(object):
     FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, status, url, final_url=None, time=None, size=None,\
-        har=None, img=None, raw=None):
+        har=None, img=None, raw=None, tcp_fast_open_supported=False):
 
         self._status = status
         self._url = url  # the initial URL we requested
@@ -67,7 +69,8 @@ class LoadResult(object):
         self._size = size  # ??? all objects?
         self._har_path = har
         self._image_path = img
-	self._raw = raw
+        self._raw = raw
+        self._tcp_fast_open_supported = tcp_fast_open_supported
 
     @property
     def status(self):
