@@ -11,12 +11,12 @@ TCPLOADER = os.path.join(os.path.dirname(__file__), 'tcp_loader/tcp_loader')
 
 
 class TCPLoader(Loader):
-    '''Subclass of :class:`Loader` that loads pages using PhantomJS.
+    '''Subclass of :class:`Loader` that loads pages using custom executable so we can change TCP settings.
     
-    .. note:: The :class:`PhantomJSLoader` currently does not support HTTP2.
-    .. note:: The :class:`PhantomJSLoader` currently does not support local caching.
-    .. note:: The :class:`PhantomJSLoader` currently does not support disabling network caching.
-    .. note:: The :class:`PhantomJSLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`TCPLoader` currently does not support HTTP2.
+    .. note:: The :class:`TCPLoader` currently does not support local caching.
+    .. note:: The :class:`TCPLoader` currently does not support disabling network caching.
+    .. note:: The :class:`TCPLoader` currently does not support single-object loading (i.e., it always loads the full page).
     '''
 
     def __init__(self, **kwargs):
