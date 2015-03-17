@@ -39,13 +39,14 @@ class Timeout:
 ################################################################################
 
 class LoadResult(object):
-    '''Status and stats for a single URL *load*.
+    '''Status and stats for a single URL load (i.e., one trial).
     
     :param status: The status of the page load.
     :param url: The original URL.
     :param final_url: The final URL (maybe be different if we were redirected).
     :param time: The page load time (in seconds).
-    :param size: ???
+    :param size: Size of object if loading a single object; total size if loading
+        a full page.
     :param har: Path to the HAR file.
     :param img: Path to a screenshot of the loaded page.
     :param tcp_fast_open_supported: True if TCP fast open was used successfully;
@@ -66,7 +67,7 @@ class LoadResult(object):
         self._url = url  # the initial URL we requested
         self._final_url = final_url  # we may have been redirected
         self._time = time  # load time in seconds
-        self._size = size  # ??? all objects?
+        self._size = size
         self._har_path = har
         self._image_path = img
         self._raw = raw
@@ -112,6 +113,12 @@ class LoadResult(object):
         '''Raw output from the underlying command.'''
         return self._raw
 
+    @property
+    def tcp_fast_open_supported(self):
+        '''Bool indicating whether or not TCP fast open succeeded for this
+            connection.'''
+        return self._tcp_fast_open_supported
+
     def __str__(self):
         return 'LoadResult (%s): %s' % (self._status,  pprint.saferepr(self.__dict__))
 
@@ -139,6 +146,7 @@ class PageResult(object):
         self._url = url
         self._times = []
         self._sizes = []
+        self._tcp_fast_open_support_statuses = []
 
         if load_results:
             was_a_failure = False
@@ -148,6 +156,8 @@ class PageResult(object):
                     was_a_success = True
                     if result.time: self.times.append(result.time)
                     if result.size: self.sizes.append(result.size)
+                    self._tcp_fast_open_support_statuses.append(
+                        result.tcp_fast_open_supported)
                 else:
                     was_a_failure = True
             if was_a_failure and was_a_success:
@@ -179,6 +189,12 @@ class PageResult(object):
     def sizes(self):
         '''A list of the page sizes from individual trials.'''
         return self._sizes
+
+    @property
+    def tcp_fast_open_support_statuses(self):
+        '''A list of bools indicating whether or not TCP fast open succeeded
+            for each load.'''
+        return self._tcp_fast_open_support_statuses
     
     @property
     def mean_time(self):

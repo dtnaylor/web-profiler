@@ -17,19 +17,26 @@
 int main(int argc, char* argv[])
 {
 	/*************** PARSE ARGUMENTS ***************/
-    if (argc != 4)
+    if (argc != 4 && argc != 5)
     {
-        fprintf(stderr, "usage: %s protocol host path\n",argv[0]);
+        fprintf(stderr, "usage: %s protocol host path [user agent]\n",argv[0]);
         return EXIT_FAILURE;
     }
 	char *protocol = argv[1];
 	char *host = argv[2];
 	char *path = argv[3];
 
+	char *user_agent;
+	if (argc >= 5) {
+		user_agent = argv[4];
+	} else {
+		user_agent = "TFO Support Tester";
+	}
+
 	/*************** PREPARE REQUEST ***************/
 	char request[REQUEST_SIZE];
-	snprintf(request, REQUEST_SIZE, "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n",
-		path, host);
+	snprintf(request, REQUEST_SIZE, "GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: %s\r\n\r\n",
+		path, host, user_agent);
 
 	printf("Request (len %lu):\n%s\n", strlen(request), request);
 
@@ -79,6 +86,13 @@ int main(int argc, char* argv[])
     //fprintf(stdout, "[TFO]  Sending %s", request);
 	//sendto(sock, request, strlen(request), MSG_FASTOPEN, servinfo->ai_addr, servinfo->ai_addrlen);
 
+	// Test if TCP Fast Open was successful
+	int tfo_support = 0;
+	int tfo_status = syscall(324, sock);  // -2 don't know; -1 no support; 0 support
+	if (tfo_status == 0) {
+		tfo_support = 1;
+	}
+
 
 	/*************** RECEIVE RESPONSE ***************/
     char buf[RESPONSE_BUF_SIZE];
@@ -108,7 +122,7 @@ int main(int argc, char* argv[])
 				memcpy(length_str, length_header_start+16, num_digits);
 				length_str[num_digits] = '\0';
 				content_length = atoi(length_str);
-				printf("length: %d\n", content_length);
+				printf("Advertised content length: %d\n", content_length);
 			}
 		}
 
@@ -127,6 +141,7 @@ int main(int argc, char* argv[])
 
 	buf[total_bytes_received] = '\0';
 	//fprintf(stdout, "Received %s", buf);
+	printf("Received content length: %d\n", total_bytes_received-header_length);
 
     freeaddrinfo(servinfo);
     close(sock);    
@@ -134,8 +149,9 @@ int main(int argc, char* argv[])
 
 	/*************** RETURN STATUS ***************/
     // return info to python wrapper by printing to last line of stdout
-    printf("tcp_fast_open_used=0");
-    printf(";time_seconds=%f\n", seconds_elapsed);
+    printf("tcp_fast_open_used=%d", tfo_support);
+    printf(";time_seconds=%f", seconds_elapsed);
+	printf(";size=%d\n", total_bytes_received-header_length);
 
     return EXIT_SUCCESS;
 }

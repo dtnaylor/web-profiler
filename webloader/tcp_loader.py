@@ -47,11 +47,11 @@ class TCPLoader(Loader):
             cmd = '%s %s %s %s' %\
                 (TCPLOADER, parsed_url.scheme, parsed_url.netloc, path)
             if self._user_agent:
-                pass  # TODO
+                cmd += ' "%s"' % self._user_agent
 
             logging.debug('Running tcploader: %s', cmd)
             with Timeout(seconds=self._timeout+5):
-                output = subprocess.check_output(cmd.split())
+                output = subprocess.check_output(cmd, shell=True)
 
             logging.debug('tcploader returned: %s', output.strip())
             returnvals = {field.split('=')[0]: field.split('=')[1]\
@@ -59,6 +59,7 @@ class TCPLoader(Loader):
             return LoadResult(LoadResult.SUCCESS,
                 url,
                 time=float(returnvals['time_seconds']),
+                size=int(returnvals['size']),
                 tcp_fast_open_supported=\
                     bool(int(returnvals['tcp_fast_open_used']))
                 )
