@@ -19,7 +19,7 @@ def main():
     #loader = PythonRequestsLoader(num_trials=1)
     #loader = FirefoxLoader(num_trials=1, headless=False, selenium=False)
     #loader = PhantomJSLoader(num_trials=5)
-    loader = TCPLoader(num_trials=1, full_page=False, user_agent='Test User Agent')
+    loader = TCPLoader(num_trials=1, full_page=False, user_agent='Test User Agent', check_protocol_availability=False)
     loader.load_pages(['http://www.cnn.com'])
     print loader.urls
     pprint.pprint(dict(loader.load_results))

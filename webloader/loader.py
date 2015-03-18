@@ -248,13 +248,16 @@ class Loader(object):
     :param stdout_filename: if the loader launches other procs (e.g., browser),
         send their stdout and stderr to this file. If None, use parent proc's
         stdout and stderr.
+    :param check_protocol_availability: before loading the page, check to see
+        if the specified protocol (HTTP or HTTPS) is supported. (otherwise, the
+        loader might silently fall back to a different protocol.)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
         user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
         save_har=False, save_screenshot=False, retries_per_trial=0,\
-        stdout_filename=None):
+        stdout_filename=None, check_protocol_availability=True):
         '''Initialize a Loader object.'''
 
         # options
@@ -273,6 +276,7 @@ class Loader(object):
         self._retries_per_trial = retries_per_trial
         self._stdout_filename = stdout_filename
         self._proxy = proxy
+        self._check_protocol_availability = check_protocol_availability
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
@@ -414,7 +418,8 @@ class Loader(object):
                 url = self._check_url(url)
 
                 # make sure URL is accessible over specified protocol
-                if not self._check_protocol_available(url):
+                if self._check_protocol_availability and \
+                    not self._check_protocol_available(url):
                     logging.info('%s is not accessible', url)
                     self._urls.append(url)
                     self._page_results[url] = PageResult(url,\
