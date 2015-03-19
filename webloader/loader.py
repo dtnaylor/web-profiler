@@ -144,6 +144,7 @@ class PageResult(object):
     def __init__(self, url, status=None, load_results=None):
         self._status = PageResult.FAILURE_UNSET
         self._url = url
+        self._load_statuses = []
         self._times = []
         self._sizes = []
         self._tcp_fast_open_support_statuses = []
@@ -152,6 +153,7 @@ class PageResult(object):
             was_a_failure = False
             was_a_success = False
             for result in load_results:
+                self._load_statuses.append(result.status)
                 if result.status == PageResult.SUCCESS:
                     was_a_success = True
                     if result.time: self.times.append(result.time)
@@ -179,6 +181,11 @@ class PageResult(object):
     def url(self):
         '''The URL.'''
         return self._url
+
+    @property
+    def load_statuses(self):
+        '''A list of statuses from individual trials.'''
+        return self._load_statuses
 
     @property
     def times(self):
