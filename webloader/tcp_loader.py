@@ -78,4 +78,4 @@ class TCPLoader(Loader):
             try:
                 subprocess.check_output('killall tcp_loader'.split())
             except Exception as e:
-                logging.warning('Error killing tcp_loader (process might not exist): %s', e)
+                logging.debug('Error killing tcp_loader (process might not exist): %s', e)

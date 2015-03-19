@@ -72,23 +72,22 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
     
-    if (connect (sock, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
-    {
-        fprintf(stderr, "Error connecting: %s\n", strerror(errno));
-        return EXIT_FAILURE;
-    }
+    //if (connect (sock, servinfo->ai_addr, servinfo->ai_addrlen) == -1)
+    //{
+    //    fprintf(stderr, "Error connecting: %s\n", strerror(errno));
+    //    return EXIT_FAILURE;
+    //}
         
 
 	/*************** SEND REQUEST ***************/
-    send(sock, request, strlen(request), 0);
-
-	/* TFO connect and send out some data */
-    //fprintf(stdout, "[TFO]  Sending %s", request);
-	//sendto(sock, request, strlen(request), MSG_FASTOPEN, servinfo->ai_addr, servinfo->ai_addrlen);
+	// Use sendto() for TFO or connect() followed by send() for normal TCP
+    //send(sock, request, strlen(request), 0);
+	sendto(sock, request, strlen(request), MSG_FASTOPEN, servinfo->ai_addr, servinfo->ai_addrlen);
 
 	// Test if TCP Fast Open was successful
 	int tfo_support = 0;
 	int tfo_status = syscall(324, sock);  // -2 don't know; -1 no support; 0 support
+	printf("syscall 324 returned: %d\n", tfo_status);
 	if (tfo_status == 0) {
 		tfo_support = 1;
 	}
