@@ -125,7 +125,7 @@ COUNTRIES = [
     (('uganda','ug'), 'UG'),
     (('ukraine','ua'), 'UA'),
     (('unitedarabemirates','ae'), 'AE'),
-    (('unitedkingdom','gb'), 'GB'),
+    (('unitedkingdom', 'greatbritain', 'uk','gb'), 'GB'),
     (('unitedstates', 'usa','us'), 'US'),
     (('uruguay','uy'), 'UY'),
     (('uzbekistan','uz'), 'UZ'),
