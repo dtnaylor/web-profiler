@@ -61,7 +61,8 @@ class LoadResult(object):
     FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, status, url, final_url=None, time=None, size=None,\
-        har=None, img=None, raw=None, tcp_fast_open_supported=False):
+        har=None, img=None, raw=None, tcp_fast_open_supported=False,\
+        tls_false_start_supported=False, tls_session_resumption_supported=False):
 
         self._status = status
         self._url = url  # the initial URL we requested
@@ -72,6 +73,8 @@ class LoadResult(object):
         self._image_path = img
         self._raw = raw
         self._tcp_fast_open_supported = tcp_fast_open_supported
+        self._tls_false_start_supported = tls_false_start_supported
+        self._tls_session_resumption_supported = tls_session_resumption_supported
 
     @property
     def status(self):
@@ -119,6 +122,18 @@ class LoadResult(object):
             connection.'''
         return self._tcp_fast_open_supported
 
+    @property
+    def tls_false_start_supported(self):
+        '''Bool indicating whether or not TLS false start succeeded for this
+            connection.'''
+        return self._tls_false_start_supported
+    
+    @property
+    def tls_session_resumption_supported(self):
+        '''Bool indicating whether or not TLS session resumption succeeded for this
+            connection.'''
+        return self._tls_session_resumption_supported
+
     def __str__(self):
         return 'LoadResult (%s): %s' % (self._status,  pprint.saferepr(self.__dict__))
 
@@ -148,6 +163,8 @@ class PageResult(object):
         self._times = []
         self._sizes = []
         self._tcp_fast_open_support_statuses = []
+        self._tls_false_start_support_statuses = []
+        self._tls_session_resumption_support_statuses = []
 
         if load_results:
             was_a_failure = False
@@ -160,6 +177,10 @@ class PageResult(object):
                     if result.size: self.sizes.append(result.size)
                     self._tcp_fast_open_support_statuses.append(
                         result.tcp_fast_open_supported)
+                    self._tls_false_start_support_statuses.append(
+                        result.tls_false_start_supported)
+                    self._tls_session_resumption_support_statuses.append(
+                        result.tls_session_resumption_supported)
                 else:
                     was_a_failure = True
             if was_a_failure and was_a_success:
@@ -202,6 +223,18 @@ class PageResult(object):
         '''A list of bools indicating whether or not TCP fast open succeeded
             for each load.'''
         return self._tcp_fast_open_support_statuses
+    
+    @property
+    def tls_false_start_support_statuses(self):
+        '''A list of bools indicating whether or not TLS false start succeeded
+            for each load.'''
+        return self._tls_false_start_support_statuses
+    
+    @property
+    def tls_session_resumption_support_statuses(self):
+        '''A list of bools indicating whether or not TLS session resumption 
+            succeeded for each load.'''
+        return self._tls_session_resumption_support_statuses
     
     @property
     def mean_time(self):

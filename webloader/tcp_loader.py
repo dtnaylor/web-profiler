@@ -33,8 +33,6 @@ class TCPLoader(Loader):
             raise NotImplementedError('TCPLoader does not support saving HARs.')
         if self._save_screenshot:
             raise NotImplementedError('TCPLoader does not support saving screenshots.')
-        
-        self._image_paths_by_url = defaultdict(list)
 
 
     def _load_page(self, url, outdir, trial_num=-1):

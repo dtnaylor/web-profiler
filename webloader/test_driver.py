@@ -12,6 +12,7 @@ from pythonrequests_loader import PythonRequestsLoader
 from curl_loader import CurlLoader
 from nodejs_loader import NodeJsLoader
 from tcp_loader import TCPLoader
+from tls_loader import TLSLoader
 
 def main():
     #loader = NodeJsLoader(num_trials=1, full_page=False, http2=True)
@@ -19,8 +20,10 @@ def main():
     #loader = PythonRequestsLoader(num_trials=1)
     #loader = FirefoxLoader(num_trials=1, headless=False, selenium=False)
     #loader = PhantomJSLoader(num_trials=5)
-    loader = TCPLoader(num_trials=2, full_page=False, user_agent='Test User Agent', check_protocol_availability=False)
-    loader.load_pages(['http://www.google.com'])
+    #loader = TCPLoader(num_trials=2, full_page=False, user_agent='Test User Agent', check_protocol_availability=False)
+    #loader = TLSLoader(num_trials=2, full_page=False, test_session_resumption=True, timeout=10)
+    loader = TLSLoader(num_trials=2, full_page=False, test_false_start=True, timeout=10)
+    loader.load_pages(['https://www.chase.com'])
     print loader.urls
     pprint.pprint(dict(loader.load_results))
     pprint.pprint(dict(loader.page_results))
