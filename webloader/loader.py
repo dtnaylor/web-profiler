@@ -61,8 +61,9 @@ class LoadResult(object):
     FAILURE_UNSET = 'FAILURE_UNSET' #: Status has not been set
 
     def __init__(self, status, url, final_url=None, time=None, size=None,\
-        har=None, img=None, raw=None, tcp_fast_open_supported=False,\
-        tls_false_start_supported=False, tls_session_resumption_supported=False):
+        har=None, img=None, raw=None, server=None,\
+        tcp_fast_open_supported=False, tls_false_start_supported=False,\
+        tls_session_resumption_supported=False):
 
         self._status = status
         self._url = url  # the initial URL we requested
@@ -72,6 +73,7 @@ class LoadResult(object):
         self._har_path = har
         self._image_path = img
         self._raw = raw
+        self._server = server
         self._tcp_fast_open_supported = tcp_fast_open_supported
         self._tls_false_start_supported = tls_false_start_supported
         self._tls_session_resumption_supported = tls_session_resumption_supported
@@ -115,6 +117,11 @@ class LoadResult(object):
     def raw(self):
         '''Raw output from the underlying command.'''
         return self._raw
+
+    @property
+    def server(self):
+        '''Web server software name.'''
+        return self._server
 
     @property
     def tcp_fast_open_supported(self):
@@ -162,6 +169,7 @@ class PageResult(object):
         self._load_statuses = []
         self._times = []
         self._sizes = []
+        self._server = 'UNKNOWN'
         self._tcp_fast_open_support_statuses = []
         self._tls_false_start_support_statuses = []
         self._tls_session_resumption_support_statuses = []
@@ -171,6 +179,8 @@ class PageResult(object):
             was_a_success = False
             for result in load_results:
                 self._load_statuses.append(result.status)
+                if result.server:
+                    self._server = result.server
                 if result.status == PageResult.SUCCESS:
                     was_a_success = True
                     if result.time: self.times.append(result.time)
@@ -217,6 +227,11 @@ class PageResult(object):
     def sizes(self):
         '''A list of the page sizes from individual trials.'''
         return self._sizes
+
+    @property
+    def server(self):
+        '''Web server software name.'''
+        return self._server
 
     @property
     def tcp_fast_open_support_statuses(self):

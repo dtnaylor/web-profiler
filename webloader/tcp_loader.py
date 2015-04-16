@@ -58,6 +58,7 @@ class TCPLoader(Loader):
                 url,
                 time=float(returnvals['time_seconds']),
                 size=int(returnvals['size']),
+                server=returnvals['server'],
                 tcp_fast_open_supported=\
                     bool(int(returnvals['tcp_fast_open_used']))
                 )

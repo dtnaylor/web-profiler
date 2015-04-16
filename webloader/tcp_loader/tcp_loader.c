@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h> 
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -99,6 +100,9 @@ int main(int argc, char* argv[])
 	int bytes_received = 0;  // during last recv() call
 	int header_length = 0;
 	int content_length = 0;
+	bool found_server_software = false;
+	char server_software[128];
+	sprintf(server_software, "UNKNOWN");
 
 	do {
 		bytes_received = recv(sock, &buf[total_bytes_received],
@@ -110,23 +114,44 @@ int main(int argc, char* argv[])
 			return EXIT_FAILURE;
 		}
 
-		// If we still don't know content length, look for Content-Length hdr
-		if (content_length == 0) {
-			char *length_header_start = strstr(buf, "Content-Length");
-			if (length_header_start) {
-				char *length_header_end = strstr(length_header_start, "\r\n");
-				int num_digits = length_header_end-length_header_start - 16;
 
-				char length_str[20];
-				memcpy(length_str, length_header_start+16, num_digits);
-				length_str[num_digits] = '\0';
-				content_length = atoi(length_str);
-				printf("Advertised content length: %d\n", content_length);
-			}
-		}
-
-		// If we still don't know header length, look for \r\n\r\n
+		// If we still don't know header length, we're still receiving headers
 		if (header_length == 0) {
+
+			// If we still don't know content length, look for Content-Length hdr
+			if (content_length == 0) {
+				char *length_header_start = strstr(buf, "Content-Length");
+				if (!length_header_start)
+					length_header_start = strstr(buf, "content-length");
+				if (length_header_start) {
+					char *length_header_end = strstr(length_header_start, "\r\n");
+					int num_digits = length_header_end-length_header_start - 16;
+
+					char length_str[20];
+					memcpy(length_str, length_header_start+16, num_digits);
+					length_str[num_digits] = '\0';
+					content_length = atoi(length_str);
+					printf("Advertised content length: %d\n", content_length);
+				}
+			}
+
+			// If we still don't know server, look for Server hdr
+			if (!found_server_software) {
+				char *server_header_start = strstr(buf, "Server:");
+				if (!server_header_start)
+					server_header_start = strstr(buf, "server:");
+				if (server_header_start) {
+					char *server_header_end = strstr(server_header_start, "\r\n");
+					int num_chars = server_header_end-server_header_start - 8;
+
+					memcpy(server_software, server_header_start+8, num_chars);  // FIXME: overflow
+					server_software[num_chars] = '\0';
+					printf("Server software: %s\n", server_software);
+				}
+
+			}
+
+			// look for \r\n\r\n  (end of headers)
 			char *return_start = strstr(buf, "\r\n\r\n");
 			if (return_start) {
 				header_length = (return_start - buf) + 4;
@@ -150,7 +175,8 @@ int main(int argc, char* argv[])
     // return info to python wrapper by printing to last line of stdout
     printf("tcp_fast_open_used=%d", tfo_support);
     printf(";time_seconds=%f", seconds_elapsed);
-	printf(";size=%d\n", total_bytes_received-header_length);
+	printf(";size=%d", total_bytes_received-header_length);
+	printf(";server=%s\n", server_software);
 
     return EXIT_SUCCESS;
 }
