@@ -149,6 +149,3 @@ class ChromeLoader(Loader):
             logging.debug('Stopping XVFB')
             self._xvfb_proc.kill()
             self._xvfb_proc.wait()
-
-        if self._stdout_file:
-            self._stdout_file.close()

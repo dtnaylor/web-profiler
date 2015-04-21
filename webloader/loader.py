@@ -458,7 +458,12 @@ class Loader(object):
     
     def __teardown(self):
         '''Private teardown method for Loader superclass'''
-        return self._teardown()
+        child_ret = self._teardown()
+
+        if self._stdout_file:
+            self._stdout_file.close()
+
+        return child_ret
 
     def __getstate__(self):
         '''override getstate so we don't try to pickle the stdout file object'''
@@ -560,8 +565,8 @@ class Loader(object):
                                 self._load_results[url].append(result)
 
                             if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
-                                self._teardown()
-                                self._setup()
+                                self.__teardown()
+                                self.__setup()
                                 self._num_restarts += 1
 
                     except Exception as e:
@@ -574,9 +579,12 @@ class Loader(object):
         except Exception as e:
             logging.exception('Error loading pages: %s\n%s', e, traceback.format_exc())
         finally:
-            self.__teardown()
             # stop tcpdump (if it's running)
-            if tcpdump_proc:
-                logging.debug('Stopping tcpdump')
-                os.system("sudo kill %s" % tcpdump_proc.pid)
-                tcpdump_proc = None
+            try:
+                if tcpdump_proc:
+                    logging.debug('Stopping tcpdump')
+                    os.system("sudo kill %s" % tcpdump_proc.pid)
+                    tcpdump_proc = None
+            except:
+                logging.exception('Error stopping tcpdump.')
+            self.__teardown()
