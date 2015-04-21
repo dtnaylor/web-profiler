@@ -440,9 +440,25 @@ class Loader(object):
         '''Subclasses can override to prepare (e.g., launch Xvfb)'''
         return True
     
+    def __setup(self):
+        '''Private setup method for Loader superclass'''
+        if self._stdout_filename:
+            try:
+                self._stdout_file = open(self._stdout_filename, 'a')
+            except:
+                logging.exception('Error opening stdout file: %s. Using parent\'s stdout.',\
+                    self._stdout_filename)
+                self._stdout_file = None
+
+        return self._setup()
+
     def _teardown(self):
         '''Subclasses can override to clean up (e.g., kill Xvfb)'''
         return True
+    
+    def __teardown(self):
+        '''Private teardown method for Loader superclass'''
+        return self._teardown()
 
     def __getstate__(self):
         '''override getstate so we don't try to pickle the stdout file object'''
@@ -490,7 +506,7 @@ class Loader(object):
         '''
         tcpdump_proc = None  # if we use tcpdump, keep a handle to the process
         try:
-            if not self._setup():
+            if not self.__setup():
                 logging.error('Error setting up loader')
                 return
 
@@ -521,8 +537,8 @@ class Loader(object):
                                 pcap_path = self._outfile_path(url, suffix='.pcap', trial=i)
                                 tcpdump_command = 'sudo %s -w %s' % (TCPDUMP, pcap_path)
                                 logging.debug('Starting tcpdump: %s', tcpdump_command)
-                                # TODO: send stdout and stderr to self._stdout_filename
-                                tcpdump_proc = subprocess.Popen(tcpdump_command.split())
+                                tcpdump_proc = subprocess.Popen(tcpdump_command.split(),\
+                                    stdout=self._stdout_file, stderr=self._stdout_file)
 
                             # load the page
                             result = self._load_page(url, self._outdir, i)
@@ -558,7 +574,7 @@ class Loader(object):
         except Exception as e:
             logging.exception('Error loading pages: %s\n%s', e, traceback.format_exc())
         finally:
-            self._teardown()
+            self.__teardown()
             # stop tcpdump (if it's running)
             if tcpdump_proc:
                 logging.debug('Stopping tcpdump')

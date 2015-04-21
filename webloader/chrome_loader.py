@@ -74,17 +74,8 @@ class ChromeLoader(Loader):
 
 
     def _setup(self):
-        stdout = None
-        stderr = None
-        if self._stdout_filename:
-            try:
-                self._stdout_file = open(self._stdout_filename, 'a')
-            except:
-                logging.exception('Error opening stdout file: %s. Using parent\'s stdout.',\
-                    self._stdout_filename)
-                self._stdout_file = None
-            stdout = self._stdout_file
-            stderr = self._stdout_file
+        stdout = self._stdout_file
+        stderr = self._stdout_file
 
         if self._headless:
             # start a virtual display
