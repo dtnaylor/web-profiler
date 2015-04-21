@@ -1,3 +1,5 @@
+import os
+import subprocess
 import re
 import logging
 import urlparse
@@ -7,6 +9,9 @@ import pprint
 import traceback
 import numpy
 from collections import defaultdict
+
+
+TCPDUMP = '/usr/sbin/tcpdump'
 
 
 ################################################################################
@@ -306,13 +311,15 @@ class Loader(object):
     :param check_protocol_availability: before loading the page, check to see
         if the specified protocol (HTTP or HTTPS) is supported. (otherwise, the
         loader might silently fall back to a different protocol.)
+    :param save_packet_capture: save a pcap trace for each load (separate files)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
         user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
         save_har=False, save_screenshot=False, retries_per_trial=0,\
-        stdout_filename=None, check_protocol_availability=True):
+        stdout_filename=None, check_protocol_availability=True,\
+        save_packet_capture=False):
         '''Initialize a Loader object.'''
 
         # options
@@ -332,6 +339,7 @@ class Loader(object):
         self._stdout_filename = stdout_filename
         self._proxy = proxy
         self._check_protocol_availability = check_protocol_availability
+        self._save_packet_capture = save_packet_capture
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
@@ -359,6 +367,16 @@ class Loader(object):
     def _sanitize_url(self, url):
         '''Returns a version of the URL suitable for use in a file name.'''
         return re.sub(r'[/\;,><&*:%=+@!#^()|?^]', '-', url)
+
+    def _outfile_path(self, url, suffix=None, trial=None):
+        '''Returns a path for an output file (e.g., HAR, screenshot, pcap)'''
+        filename = self._sanitize_url(url)
+        if trial:
+            filename += '_trial%d' % trial
+        if suffix:
+            filename += suffix
+        return os.path.join(self._outdir, filename)
+
 
     def _check_url(self, url):
         '''Make sure URL is well-formed'''
@@ -462,6 +480,7 @@ class Loader(object):
         
         :param urls: list of URLs to load
         '''
+        tcpdump_proc = None  # if we use tcpdump, keep a handle to the process
         try:
             if not self._setup():
                 logging.error('Error setting up loader')
@@ -489,8 +508,23 @@ class Loader(object):
                         while tries_so_far <= self._retries_per_trial:
                             tries_so_far += 1
 
+                            # start tcpdump if we want a packet capture
+                            if self._save_packet_capture:
+                                pcap_path = self._outfile_path(url, suffix='.pcap', trial=i)
+                                tcpdump_command = 'sudo %s -w %s' % (TCPDUMP, pcap_path)
+                                logging.debug('Starting tcpdump: %s', tcpdump_command)
+                                # TODO: send stdout and stderr to self._stdout_filename
+                                tcpdump_proc = subprocess.Popen(tcpdump_command.split())
+
+                            # load the page
                             result = self._load_page(url, self._outdir, i)
                             logging.debug('Trial %d, try %d: %s' % (i, tries_so_far, result))
+
+                            # stop tcpdump (if it's running)
+                            if tcpdump_proc:
+                                logging.debug('Stopping tcpdump')
+                                os.system("sudo kill %s" % tcpdump_proc.pid)
+                                tcpdump_proc = None
 
                             if result.status == LoadResult.SUCCESS:
                                 self._urls.append(url)
@@ -517,3 +551,8 @@ class Loader(object):
             logging.exception('Error loading pages: %s\n%s', e, traceback.format_exc())
         finally:
             self._teardown()
+            # stop tcpdump (if it's running)
+            if tcpdump_proc:
+                logging.debug('Stopping tcpdump')
+                os.system("sudo kill %s" % tcpdump_proc.pid)
+                tcpdump_proc = None

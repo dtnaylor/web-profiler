@@ -49,6 +49,11 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 
 	Set path to binary at top of `chrome_loader.py`.
 
+* [node.js](https://nodejs.org)
+
+	Needed by the `ChromeLoader`. (On Ubuntu, be sure to install nodejs package
+	and not node.)
+
 * [Python Requests](http://docs.python-requests.org)
 
     Used to test the availability of sites of HTTP or HTTPS and by the 

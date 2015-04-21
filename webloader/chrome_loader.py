@@ -11,7 +11,6 @@ CHROME_HAR_CAPTURER = '/usr/bin/env chrome-har-capturer'
 XVFB = '/usr/bin/env Xvfb'
 DISPLAY = ':99'
 
-# TODO: document chrome-har-capturer
 # TODO: test if isntalled chrome can support HTTP2
 # TODO: pick different display if multiple instances are used at once
 # TODO: get load time
@@ -45,10 +44,8 @@ class ChromeLoader(Loader):
 
     def _load_page(self, url, outdir, trial_num=-1):
         # path for new HAR file
-        safeurl = self._sanitize_url(url)
-        filename = '%s_trial%d.har' % (safeurl, trial_num)
         if self._save_har:
-            harpath = os.path.join(outdir, filename)
+            harpath = self._outfile_path(url, suffix='.har', trial=trial_num)
         else:
             harpath = '/dev/null'
         logging.debug('Will save HAR to %s', harpath)

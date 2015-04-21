@@ -22,8 +22,9 @@ def main():
     #loader = PhantomJSLoader(num_trials=5)
     #loader = TCPLoader(num_trials=2, full_page=False, user_agent='Test User Agent', check_protocol_availability=False)
     #loader = TLSLoader(num_trials=2, full_page=False, test_session_resumption=True, timeout=10)
-    loader = TLSLoader(num_trials=2, full_page=False, test_false_start=True, timeout=10)
-    loader.load_pages(['https://www.chase.com'])
+    #loader = TLSLoader(num_trials=2, full_page=False, test_false_start=True, timeout=10)
+    loader = ChromeLoader(num_trials=1, save_packet_capture=True)
+    loader.load_pages(['http://www.cnn.com'])
     print loader.urls
     pprint.pprint(dict(loader.load_results))
     pprint.pprint(dict(loader.page_results))
