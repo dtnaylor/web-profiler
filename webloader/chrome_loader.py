@@ -104,6 +104,10 @@ class ChromeLoader(Loader):
                 logging.exception("Error starting XFVB")
                 return False
             logging.debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
+
+        if self._ssl_keylog_file:
+            os.environ['SSLKEYLOGFILE'] = self._ssl_keylog_file
+            
     
         # launch chrome with no cache and remote debug on
         try:
@@ -113,6 +117,10 @@ class ChromeLoader(Loader):
                 options += ' --user-agent="%s"' % self._user_agent
             if self._disable_local_cache:
                 options += ' --disable-application-cache --disable-cache'
+            if self._disable_quic:
+                options += ' --disable-quic'
+            if self._disable_spdy:
+                options += ' --use-spdy=false'
             # options for chrome-har-capturer
             options += ' --remote-debugging-port=9222 --enable-benchmarking --enable-net-benchmarking'
 
