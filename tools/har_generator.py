@@ -37,7 +37,8 @@ def main():
             num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
             retries_per_trial=1, stdout_filename=args.stdoutfile,\
             log_ssl_keys=args.log_ssl_keys, disable_spdy=args.disable_spdy,\
-            save_packet_capture=args.packet_trace)
+            save_packet_capture=args.packet_trace,\
+            check_protocol_availability=args.disable_protocol_check)
         loader.load_pages(urls)
 
         # pickle load results
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--outdir', default='.', help='Destination directory for HAR files.')
     parser.add_argument('-n', '--numtrials', default=1, type=int, help='Number of times to load each URL.')
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
+    parser.add_argument('--disable-protocol-check', action='store_true', help='Do not check if the site supports HTTPS')
     parser.add_argument('--packet-trace', action='store_true', default=False, help='Save a packet trace for each page load.')
     parser.add_argument('--log-ssl-keys', action='store_true', default=False, help='Log SSL keys')
     parser.add_argument('--disable-spdy', action='store_true', default=False, help='Disable SPDY/HTTP2')
