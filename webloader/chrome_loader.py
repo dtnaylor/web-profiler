@@ -105,7 +105,7 @@ class ChromeLoader(Loader):
                 return False
             logging.debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
 
-        if self._ssl_keylog_file:
+        if self._log_ssl_keys:
             keylog_file = os.path.join(self._outdif, 'ssl_keylog')
             os.environ['SSLKEYLOGFILE'] = keylog_file
             

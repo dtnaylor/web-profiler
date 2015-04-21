@@ -24,7 +24,7 @@ def main():
     #loader = TLSLoader(num_trials=2, full_page=False, test_session_resumption=True, timeout=10)
     #loader = TLSLoader(num_trials=2, full_page=False, test_false_start=True, timeout=10)
     loader = ChromeLoader(num_trials=1, disable_quic=False, disable_spdy=True,\
-        save_packet_capture=True, ssl_keylog_file='./ssl_keys')
+        save_packet_capture=True, log_ssl_keys=True)
     loader.load_pages(['https://www.google.com', 'https://www.youtube.com'])
     print loader.urls
     pprint.pprint(dict(loader.load_results))
