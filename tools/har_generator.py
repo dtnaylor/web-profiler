@@ -35,14 +35,15 @@ def main():
     if len(urls) > 0:
         loader = ChromeLoader(outdir=args.outdir, user_agent=args.useragent,\
             num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
-            retries_per_trial=1, stdout_filename=args.stdoutfile)
+            retries_per_trial=1, stdout_filename=args.stdoutfile,\
+            log_ssl_keys=args.log_ssl_keys, disable_spdy=args.disable_spdy,\
+            save_packet_capture=args.packet_trace)
         loader.load_pages(urls)
 
         # pickle load results
         try:
             with open(os.path.join(args.outdir, 'har_generator_results.pickle'), 'w') as f:
                 pickle.dump(loader, f)
-            f.closed
         except:
             logging.exception('Error saving pickled results.')
 
@@ -57,6 +58,9 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--outdir', default='.', help='Destination directory for HAR files.')
     parser.add_argument('-n', '--numtrials', default=1, type=int, help='Number of times to load each URL.')
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
+    parser.add_argument('--packet-trace', action='store_true', default=False, help='Save a packet trace for each page load.')
+    parser.add_argument('--log-ssl-keys', action='store_true', default=False, help='Log SSL keys')
+    parser.add_argument('--disable-spdy', action='store_true', default=False, help='Disable SPDY/HTTP2')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
     parser.add_argument('-g', '--logfile', default=None, help='Path for log file.')

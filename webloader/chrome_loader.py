@@ -106,7 +106,8 @@ class ChromeLoader(Loader):
             logging.debug('Started XVFB (DISPLAY=%s)', os.environ['DISPLAY'])
 
         if self._ssl_keylog_file:
-            os.environ['SSLKEYLOGFILE'] = self._ssl_keylog_file
+            keylog_file = os.path.join(self._outdif, 'ssl_keylog')
+            os.environ['SSLKEYLOGFILE'] = keylog_file
             
     
         # launch chrome with no cache and remote debug on

@@ -315,7 +315,7 @@ class Loader(object):
     :param disable_quic: disable use of the QUIC transport protocol
     :param disable_spdy: disable use of SPDY/HTTP2
     :param ssl_keylog_file: if specified, instruct browser to save SSL session
-        keys to this file (by setting SSLKEYLOGFILE environment variable)
+        keys (by setting SSLKEYLOGFILE environment variable)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
@@ -324,7 +324,7 @@ class Loader(object):
         save_har=False, save_screenshot=False, retries_per_trial=0,\
         stdout_filename=None, check_protocol_availability=True,\
         save_packet_capture=False, disable_quic=False, disable_spdy=False,\
-        ssl_keylog_file=None):
+        log_ssl_keys=False):
         '''Initialize a Loader object.'''
 
         # options
@@ -347,7 +347,7 @@ class Loader(object):
         self._save_packet_capture = save_packet_capture
         self._disable_quic = disable_quic
         self._disable_spdy = disable_spdy
-        self._ssl_keylog_file = ssl_keylog_file
+        self._log_ssl_keys = log_ssl_keys
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
