@@ -319,6 +319,14 @@ class Har(object):
         return self.url.split('://')[-1]
     base_url = property(_get_base_url)
 
+    @property
+    def on_load(self):
+        return float(self.data['pages'][0]['pageTimings']['onLoad'])
+
+    @property
+    def on_content_load(self):
+        return float(self.data['pages'][0]['pageTimings']['onContentLoad'])
+
     def _get_file_types(self):
         return self.object_lists.keys()
     file_types = property(_get_file_types)
