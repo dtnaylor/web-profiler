@@ -321,11 +321,11 @@ class Har(object):
 
     @property
     def on_load(self):
-        return float(self.data['pages'][0]['pageTimings']['onLoad'])
+        return float(self.data['log']['pages'][0]['pageTimings']['onLoad'])
 
     @property
     def on_content_load(self):
-        return float(self.data['pages'][0]['pageTimings']['onContentLoad'])
+        return float(self.data['log']['pages'][0]['pageTimings']['onContentLoad'])
 
     def _get_file_types(self):
         return self.object_lists.keys()
