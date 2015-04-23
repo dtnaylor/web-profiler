@@ -112,7 +112,9 @@ class ChromeLoader(Loader):
             if self._disable_quic:
                 options += ' --disable-quic'
             if self._disable_spdy:
-                options += ' --use-spdy=false'
+                options += ' --use-spdy=off'
+            if self._ignore_certificate_errors:
+                options += ' --ignore-certificate-errors'
             # options for chrome-har-capturer
             options += ' --remote-debugging-port=9222 --enable-benchmarking --enable-net-benchmarking'
 

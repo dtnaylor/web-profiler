@@ -38,7 +38,8 @@ def main():
             retries_per_trial=1, stdout_filename=args.stdoutfile,\
             log_ssl_keys=args.log_ssl_keys, disable_spdy=args.disable_spdy,\
             save_packet_capture=args.packet_trace,\
-            check_protocol_availability=args.disable_protocol_check)
+            check_protocol_availability=args.disable_protocol_check,\
+            ignore_certificate_errors=True)
         loader.load_pages(urls)
 
         # pickle load results
