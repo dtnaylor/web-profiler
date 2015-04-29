@@ -54,8 +54,8 @@ class HarObject(object):
         if self.category == 'unknown' and self.mime_type != '':
             report += '-> Unknown MIME type: %s\n' % self.mime_type
 
-        if self.category == 'unknown' and self.size > 0:
-            report += '-> Object of unknown type %s has nonzero size %d' % (self.mime_type, self.size)
+        if self.category == 'unknown' and self.content_size > 0:
+            report += '-> Object of unknown type %s has nonzero size %d' % (self.mime_type, self.content_size)
 
         if self.content_size - self.content_compression != self.body_size:
             report += '-> Body size (%d) does not match content size (%d) minus compression (%d)\n'\
@@ -153,7 +153,6 @@ class HarObject(object):
         '''Size of original content (before compression)'''
         content_size = int(self.json['response']['content']['size'])
         return content_size
-    size = property(content_size)
 
     @property
     def content_compression(self):
@@ -180,8 +179,8 @@ class HarObject(object):
                         date = time.strptime(self.response_headers['Date'][:-4].replace('-', ' '),\
                             '%a, %d %b %Y %H:%M:%S')
                         return expires > date
-                    except:
-                        logging.getLogger(__name__).warn('Error parsing date')
+                    except Exception as e:
+                        logging.getLogger(__name__).warn('Error parsing date: %s', e)
                         pass
             elif 'Cache-Control' in self.response_headers:
                 if any(t in self.response_headers['Cache-Control'] for t in CACHE_CONTROL_NOT_CACHEABLE):
@@ -254,11 +253,11 @@ class Har(object):
             try:
                 obj = HarObject(obj_json)
                 if not obj.sanity_check(print_report=False): continue
-                #print '%d\t%s (%s)\t%s' % (obj.size, obj.mime_type, obj.category, obj.domain)
+                #print '%d\t%s (%s)\t%s' % (obj.content_size, obj.mime_type, obj.category, obj.domain)
 
                 self.objects.append(obj)
                 self.object_lists[obj.category].append(obj)
-                self._sizes.append(obj.size)
+                self._sizes.append(obj.content_size)
                 self._hosts.add(obj.host)
 
                 self._num_objects += 1
@@ -271,10 +270,10 @@ class Har(object):
 
                 if obj.explicitly_cacheable:
                     self._num_explicitly_cacheable_objects += 1
-                    self._num_explicitly_cacheable_bytes += obj.size
+                    self._num_explicitly_cacheable_bytes += obj.body_size
                 if obj.implicitly_cacheable:
                     self._num_implicitly_cacheable_objects += 1
-                    self._num_implicitly_cacheable_bytes += obj.size
+                    self._num_implicitly_cacheable_bytes += obj.body_size
                 if obj.tcp_handshake:
                     self._num_tcp_handshakes += 1
                 if obj.ssl_handshake:
@@ -286,7 +285,7 @@ class Har(object):
                     self._total_ssl_handshake_ms += obj.timings['ssl']
                     self._total_handshake_ms += obj.timings['ssl']
             except Exception as e:
-                logging.warn('Error parsing HAR object:\n%s', obj_json)
+                logging.warn('Error parsing HAR object:%s\n%s', e, obj_json)
 
 
     def sanity_check(self):
@@ -352,7 +351,7 @@ class Har(object):
         ''' Returns total size, in bytes, of all objects of the specified type'''
         size = 0
         for obj in self.object_lists[obj_type]:
-            size += obj.size
+            size += obj.content_size
         return size
 
     def _get_num_objects(self):
