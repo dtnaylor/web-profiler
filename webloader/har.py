@@ -150,19 +150,22 @@ class HarObject(object):
 
     @property
     def content_size(self):
+        '''Size of original content (before compression)'''
         content_size = int(self.json['response']['content']['size'])
         return content_size
+    size = property(_get_content_size)
 
     @property
     def content_compression(self):
+        '''Number of bytes saved by compression'''
         return int(self.json['response']['content']['compression'])
 
     def _get_body_size(self):
+        '''Size of response body (possibly compressed)'''
         body_size = int(self.json['response']['bodySize'])
         return body_size
     response_body_size = property(_get_body_size)
     body_size = property(_get_body_size)
-    size = property(_get_body_size)
 
     def _get_explicitly_cacheable(self):
         '''Based on response headers, is this cacheable?'''
@@ -259,7 +262,7 @@ class Har(object):
                 self._hosts.add(obj.host)
 
                 self._num_objects += 1
-                self._num_bytes += obj.size
+                self._num_bytes += obj.content_size
 
                 if obj.protocol == 'http':
                     self._num_http_objects += 1
