@@ -153,7 +153,7 @@ class HarObject(object):
         '''Size of original content (before compression)'''
         content_size = int(self.json['response']['content']['size'])
         return content_size
-    size = property(_get_content_size)
+    size = property(content_size)
 
     @property
     def content_compression(self):
