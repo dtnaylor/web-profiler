@@ -255,7 +255,7 @@ class Har(object):
         self._total_tcp_handshake_ms = 0
         self._total_ssl_handshake_ms = 0
         self._total_handshake_ms = 0
-        self._version_counts = PrettyDefaultDict(int)  # http version -> count
+        self._version_counts = defaultdict(int)  # http version -> count
 
         for obj_json in self.data['log']['entries']:
             try:
