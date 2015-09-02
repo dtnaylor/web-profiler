@@ -34,6 +34,8 @@ class NodeJsLoader(Loader):
             raise NotImplementedError('NodeJsLoader does not support saving HARs.')
         if self._save_screenshot:
             raise NotImplementedError('NodeJsLoader does not support saving screenshots.')
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('NodeJsLoader does not support delay after onload')
         
         self._image_paths_by_url = defaultdict(list)
 

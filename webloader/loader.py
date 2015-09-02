@@ -318,6 +318,7 @@ class Loader(object):
         keys (by setting SSLKEYLOGFILE environment variable)
     :param ignore_certificate_errors: continue loading page even if
         certificate check fails
+    :param delay_after_onload: continue recording objects after onLoad fires (ms)
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
@@ -326,7 +327,8 @@ class Loader(object):
         save_har=False, save_screenshot=False, retries_per_trial=0,\
         stdout_filename=None, check_protocol_availability=True,\
         save_packet_capture=False, disable_quic=False, disable_spdy=False,\
-        log_ssl_keys=False, ignore_certificate_errors=False):
+        log_ssl_keys=False, ignore_certificate_errors=False,
+        delay_after_onload=0):
         '''Initialize a Loader object.'''
 
         # options
@@ -351,6 +353,7 @@ class Loader(object):
         self._disable_spdy = disable_spdy
         self._log_ssl_keys = log_ssl_keys
         self._ignore_certificate_errors = ignore_certificate_errors
+        self._delay_after_onload = delay_after_onload
         
         # cummulative list of all URLs (one per trial)
         self._urls = []

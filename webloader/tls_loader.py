@@ -35,6 +35,8 @@ class TLSLoader(Loader):
             raise NotImplementedError('TLSLoader does not support saving HARs.')
         if self._save_screenshot:
             raise NotImplementedError('TLSLoader does not support saving screenshots.')
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('TLSLoader does not support delay after onload')
 
         self._test_false_start = test_false_start
         self._test_session_resumption = test_session_resumption

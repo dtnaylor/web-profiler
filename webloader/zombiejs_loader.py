@@ -33,6 +33,8 @@ class ZombieJSLoader(Loader):
             raise NotImplementedError('ZombieJSLoader does not support loading only an object')
         if self._disable_network_cache:
             raise NotImplementedError('ZombieJSLoader does not support disabling network caches.')        
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('ZombieJSLoader does not support delay after onload')
 
     def _load_page(self, url, outdir, trial_num=-1):    
         # load the specified URL

@@ -53,7 +53,8 @@ class ChromeLoader(Loader):
         # load the specified URL
         logging.info('Fetching page %s', url)
         try:
-            capturer_cmd = '%s -o %s %s' % (CHROME_HAR_CAPTURER, harpath, url)
+            capturer_cmd = '%s -o %s -d %i %s' %\
+                (CHROME_HAR_CAPTURER, harpath, self._delay_after_onload, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
                 subprocess.check_call(capturer_cmd.split(),\

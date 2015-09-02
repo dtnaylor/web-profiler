@@ -33,6 +33,8 @@ class PythonRequestsLoader(Loader):
             raise NotImplementedError('PythonRequestsLoader does not support saving HARs.')
         if self._save_screenshot:
             raise NotImplementedError('PythonRequestsLoader does not support saving screenshots.')
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('PyhtonRequestsLoader does not support delay after onload')
 
 
     def _load_page(self, url, outdir, trial_num=-1):

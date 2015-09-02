@@ -46,6 +46,8 @@ class FirefoxLoader(Loader):
             raise NotImplementedError('FirefoxLoader does not support saving HARs')
         if self._save_screenshot:
             raise NotImplementedError('FirefoxLoader does not support saving screenshots')
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('FirefoxLoader does not support delay after onload')
 
         self._selenium = selenium
         self._xvfb_proc = None

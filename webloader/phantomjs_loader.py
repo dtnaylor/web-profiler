@@ -32,6 +32,8 @@ class PhantomJSLoader(Loader):
             raise NotImplementedError('PhantomJSLoader does not support loading only an object')
         if self._disable_network_cache:
             raise NotImplementedError('PhantomJSLoader does not support disabling network caches.')
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('PhantomJSLoader does not support delay after onload')
         
         self._image_paths_by_url = defaultdict(list)
 

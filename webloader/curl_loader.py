@@ -31,6 +31,8 @@ class CurlLoader(Loader):
             raise NotImplementedError('CurlLoader does not support saving HARs')
         if self._save_screenshot:
             raise NotImplementedError('CurlLoader does not support saving screensthos')
+        if self._delay_after_onload != 0:
+            raise NotImplementedError('CurlLoader does not support delay after onload')
             
         
         self._image_paths_by_url = defaultdict(list)

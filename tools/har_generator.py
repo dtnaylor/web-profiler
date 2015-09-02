@@ -39,7 +39,8 @@ def main():
             log_ssl_keys=args.log_ssl_keys, disable_spdy=args.disable_spdy,\
             save_packet_capture=args.packet_trace,\
             check_protocol_availability=args.disable_protocol_check,\
-            ignore_certificate_errors=True)
+            ignore_certificate_errors=True,\
+            delay_after_onload=args.delay_after_onload)
         loader.load_pages(urls)
 
         # pickle load results
@@ -60,6 +61,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--outdir', default='.', help='Destination directory for HAR files.')
     parser.add_argument('-n', '--numtrials', default=1, type=int, help='Number of times to load each URL.')
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
+    parser.add_argument('-d', '--delay-after-onload', type=int, default=0, help='Time in ms to continue recording objects after onLoad fires.')
     parser.add_argument('--disable-protocol-check', action='store_true', help='Do not check if the site supports HTTPS')
     parser.add_argument('--packet-trace', action='store_true', default=False, help='Save a packet trace for each page load.')
     parser.add_argument('--log-ssl-keys', action='store_true', default=False, help='Log SSL keys')
