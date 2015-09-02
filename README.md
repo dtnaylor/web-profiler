@@ -47,7 +47,17 @@ API documentation available [here](http://webloader.readthedocs.org/en/latest/).
 
 	Needed by the `ChromeLoader`.
 
-	Set path to binary at top of `chrome_loader.py`.
+	Set path to binary at top of `chrome_loader.py`. To install globally:
+	
+		sudo npm install -g chrome-har-capturer
+
+	To record HTTP versions, you currently need to use [this
+	fork](https://github.com/dtnaylor/chrome-har-capturer). To install
+	globally:
+
+		git clone git@github.com:dtnaylor/chrome-har-capturer.git
+		cd chrome-har-capturer
+		sudo npm install -g .
 
 * [node.js](https://nodejs.org)
 
