@@ -128,6 +128,13 @@ class HarObject(object):
         return int(self.json['response']['status'])
 
     @property
+    def response_http_version(self):
+        try:
+            return self.json['response']['httpVersion']
+        except:
+            return 'Unknown'
+
+    @property
     def object_start_time(self):
         return datetime.datetime.strptime(\
             self.json['startedDateTime'], '%Y-%m-%dT%H:%M:%S.%fZ') 
