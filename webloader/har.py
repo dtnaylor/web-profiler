@@ -255,6 +255,7 @@ class Har(object):
         self._total_tcp_handshake_ms = 0
         self._total_ssl_handshake_ms = 0
         self._total_handshake_ms = 0
+        self._version_counts = PrettyDefaultDict(int)  # http version -> count
 
         for obj_json in self.data['log']['entries']:
             try:
@@ -291,6 +292,8 @@ class Har(object):
                 if obj.timings['ssl'] >= 0:
                     self._total_ssl_handshake_ms += obj.timings['ssl']
                     self._total_handshake_ms += obj.timings['ssl']
+                
+                self._version_counts[obj.response_http_version] += 1
             except Exception as e:
                 logging.warn('Error parsing HAR object:%s\n%s', e, obj_json)
 
@@ -404,6 +407,10 @@ class Har(object):
     def _get_num_https_objects(self):
         return self._num_https_objects
     num_https_objects = property(_get_num_https_objects)
+
+    @property
+    def http_version_counts(self):
+        return self._version_counts
 
     def _get_num_tcp_handshakes(self):
         return self._num_tcp_handshakes
