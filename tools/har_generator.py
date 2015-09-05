@@ -40,6 +40,7 @@ def main():
             save_packet_capture=args.packet_trace,\
             check_protocol_availability=args.disable_protocol_check,\
             ignore_certificate_errors=True,\
+            timeout=args.timeout,\
             delay_after_onload=args.delay_after_onload)
         loader.load_pages(urls)
 
@@ -66,6 +67,7 @@ if __name__ == "__main__":
     parser.add_argument('--packet-trace', action='store_true', default=False, help='Save a packet trace for each page load.')
     parser.add_argument('--log-ssl-keys', action='store_true', default=False, help='Log SSL keys')
     parser.add_argument('--disable-spdy', action='store_true', default=False, help='Disable SPDY/HTTP2')
+    parser.add_argument('--timeout', type=int, default=30, help='Timout in seconds')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
     parser.add_argument('-g', '--logfile', default=None, help='Path for log file.')

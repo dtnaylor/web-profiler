@@ -8,6 +8,7 @@ import signal
 import pprint
 import traceback
 import numpy
+import time
 from collections import defaultdict
 
 
@@ -572,6 +573,7 @@ class Loader(object):
 
                             if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
                                 self.__teardown()
+                                time.sleep(3)
                                 self.__setup()
                                 self._num_restarts += 1
 
