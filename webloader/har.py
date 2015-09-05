@@ -18,6 +18,13 @@ CACHE_CONTROL_CACHEABLE = ('public', 'max-age', 's-maxage', 'must-revalidate',\
                            'proxy-revalidate', 'no-transform')
 CACHE_CONTROL_NOT_CACHEABLE = ('private', 'no-cache', 'no-store')
 
+DATE_FORMATS = ('%a, %d %b %Y %H:%M:%S %Z',
+                '%a, %d %b %Y %H:%M:%S',
+                '%m/%d/%Y %I:%M:%S %p', 
+                '%a %b %d %H:%M:%S %Z %Y', 
+                '%A, %d %b %Y %H:%M:%S %Z', 
+                '%a, %d %b %Y %H:%M:%S %Z')
+
 class HarError(Exception):
     pass
 
@@ -180,15 +187,31 @@ class HarObject(object):
                 if self.response_headers['Expires'] in ['0', '-1']:
                     return False
                 elif 'Date' in self.response_headers:
-                    try:
-                        expires = time.strptime(self.response_headers['Expires'][:-4].replace('-', ' '),\
-                            '%a, %d %b %Y %H:%M:%S')
-                        date = time.strptime(self.response_headers['Date'][:-4].replace('-', ' '),\
-                            '%a, %d %b %Y %H:%M:%S')
-                        return expires > date
-                    except Exception as e:
-                        logging.getLogger(__name__).warn('Error parsing date: %s', e)
-                        pass
+                    expires_str = self.response_headers['Expires'].replace('-', ' ')
+                    for fmt in DATE_FORMATS:
+                        try:
+                            expires = time.strptime(expires_str, fmt)
+                        except ValueError:
+                            pass
+                        else:
+                            break  # if we parsed date successfully, stop tyring more formats
+                    else:  # no format succeeded
+                        logging.warn('Error parsing date: %s' % expires_str)
+                        return False
+                    
+                    date_str = self.response_headers['Date'][:-4].replace('-', ' ')
+                    for fmt in DATE_FORMATS:
+                        try:
+                            date = time.strptime(date_str, fmt)
+                        except ValueError:
+                            pass
+                        else:
+                            break  # if we parsed date successfully, stop tyring more formats
+                    else:  # no format succeeded
+                        logging.warn('Error parsing date: %s' % date_str)
+                        return False
+                        
+                    return expires > date
             elif 'Cache-Control' in self.response_headers:
                 if any(t in self.response_headers['Cache-Control'] for t in CACHE_CONTROL_NOT_CACHEABLE):
                     return False
