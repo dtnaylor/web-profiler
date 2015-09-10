@@ -370,6 +370,9 @@ class Loader(object):
         # count how many times we restarted the loader due to failure
         self._num_restarts = 0
 
+        # count how many consecutive timeouts we've seen; restart if too many
+        self._consecutive_timeouts = 0
+
         # if self._stdout_filename is set, this var will hold the file object
         self._stdout_file = None
 
@@ -562,6 +565,11 @@ class Loader(object):
                                 os.system("sudo kill %s" % tcpdump_proc.pid)
                                 tcpdump_proc = None
 
+                            if result.status == LoadResult.FAILURE_TIMEOUT:
+                                self._consecutive_timeouts += 1
+                            else:
+                                self._consecutive_timeouts = 0
+
                             if result.status == LoadResult.SUCCESS:
                                 self._urls.append(url)
                                 self._load_results[url].append(result)
@@ -571,7 +579,9 @@ class Loader(object):
                                 self._urls.append(url)
                                 self._load_results[url].append(result)
 
-                            if result.status == LoadResult.FAILURE_UNKNOWN and self._restart_on_fail:
+                            if (result.status == LoadResult.FAILURE_UNKNOWN\
+                                    or self._consecutive_timeouts >= 3)\
+                                    and self._restart_on_fail:
                                 self.__teardown()
                                 time.sleep(3)
                                 self.__setup()
