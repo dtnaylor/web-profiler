@@ -302,6 +302,8 @@ class Loader(object):
     :param headless: don't use GUI (if there normally is one -- e.g., browsers)
     :param restart_on_fail: if a load fails, set up the loader again (e.g.,
         reboot chrome)
+    :param restart_each_time: tear down and set up the loader before each page
+        load (e.g., reboot chrome to close open connections)
     :param save_har: save a HAR file to the output directory
     :param save_screenshot: save a screenshot to the output directory
     :param retries_per_trial: if a trial fails, retry this many times (beyond
@@ -315,8 +317,8 @@ class Loader(object):
     :param save_packet_capture: save a pcap trace for each load (separate files)
     :param disable_quic: disable use of the QUIC transport protocol
     :param disable_spdy: disable use of SPDY/HTTP2
-    :param ssl_keylog_file: if specified, instruct browser to save SSL session
-        keys (by setting SSLKEYLOGFILE environment variable)
+    :param log_ssl_keys: instruct browser to save SSL session keys (by setting
+        SSLKEYLOGFILE environment variable)
     :param ignore_certificate_errors: continue loading page even if
         certificate check fails
     :param delay_after_onload: continue recording objects after onLoad fires (ms)
@@ -324,8 +326,9 @@ class Loader(object):
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
-        user_agent=None, headless=True, restart_on_fail=False, proxy=None,\
-        save_har=False, save_screenshot=False, retries_per_trial=0,\
+        user_agent=None, headless=True, restart_on_fail=False,\
+        restart_each_time=False, proxy=None, save_har=False,\
+        save_screenshot=False, retries_per_trial=0,\
         stdout_filename=None, check_protocol_availability=True,\
         save_packet_capture=False, disable_quic=False, disable_spdy=False,\
         log_ssl_keys=False, ignore_certificate_errors=False,
@@ -343,6 +346,7 @@ class Loader(object):
         self._user_agent = user_agent
         self._headless = headless
         self._restart_on_fail = restart_on_fail
+        self._restart_each_time = restart_each_time
         self._save_har = save_har
         self._save_screenshot = save_screenshot
         self._retries_per_trial = retries_per_trial
@@ -475,6 +479,14 @@ class Loader(object):
 
         return child_ret
 
+    def __restart(self):
+        '''Tear down and set up the loader'''
+        logging.debug('Restarting loader')
+        self.__teardown()
+        time.sleep(3)
+        self.__setup()
+        self._num_restarts += 1
+
     def __getstate__(self):
         '''override getstate so we don't try to pickle the stdout file object'''
         state = dict(self.__dict__)
@@ -565,11 +577,21 @@ class Loader(object):
                                 os.system("sudo kill %s" % tcpdump_proc.pid)
                                 tcpdump_proc = None
 
+                            # count consecutive timeouts (if too many, we might restart)
                             if result.status == LoadResult.FAILURE_TIMEOUT:
                                 self._consecutive_timeouts += 1
                             else:
                                 self._consecutive_timeouts = 0
 
+                            # restart if things are going wrong or just to clean up
+                            print 'Restart each time: ', self._restart_each_time
+                            if ((result.status == LoadResult.FAILURE_UNKNOWN\
+                                    or self._consecutive_timeouts >= 3)\
+                                    and self._restart_on_fail)\
+                                    or self._restart_each_time:
+                                self.__restart()
+
+                            # record load status
                             if result.status == LoadResult.SUCCESS:
                                 self._urls.append(url)
                                 self._load_results[url].append(result)
@@ -578,14 +600,6 @@ class Loader(object):
                                 # this was the last try, record the failure
                                 self._urls.append(url)
                                 self._load_results[url].append(result)
-
-                            if (result.status == LoadResult.FAILURE_UNKNOWN\
-                                    or self._consecutive_timeouts >= 3)\
-                                    and self._restart_on_fail:
-                                self.__teardown()
-                                time.sleep(3)
-                                self.__setup()
-                                self._num_restarts += 1
 
                     except Exception as e:
                         logging.exception('Error loading page %s: %s\n%s', url, e,\
