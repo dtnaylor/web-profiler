@@ -42,7 +42,8 @@ def main():
             ignore_certificate_errors=True,\
             restart_each_time=args.restart_each_time,\
             timeout=args.timeout,\
-            delay_after_onload=args.delay_after_onload)
+            delay_after_onload=args.delay_after_onload,\
+            delay_first_trial_only=args.delay_first_trial_only)
         loader.load_pages(urls)
 
         # pickle load results
@@ -64,6 +65,7 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--numtrials', default=1, type=int, help='Number of times to load each URL.')
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
     parser.add_argument('-d', '--delay-after-onload', type=int, default=0, help='Time in ms to continue recording objects after onLoad fires.')
+    parser.add_argument('--delay-first-trial-only', action='store_true', default=False, help='Apply onLoad delay only to the first trial.')
     parser.add_argument('--restart-each-time', action='store_true', default=False, help='Restart Chrome before each page load.')
     parser.add_argument('--disable-protocol-check', action='store_true', help='Do not check if the site supports HTTPS')
     parser.add_argument('--packet-trace', action='store_true', default=False, help='Save a packet trace for each page load.')

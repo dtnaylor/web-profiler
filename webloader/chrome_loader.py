@@ -49,12 +49,17 @@ class ChromeLoader(Loader):
         else:
             harpath = '/dev/null'
         logging.debug('Will save HAR to %s', harpath)
+
+        # onload delay
+        onload_delay = self._delay_after_onload
+        if self._delay_first_trial_only and trial_num != 0:
+            onload_delay = 0
     
         # load the specified URL
         logging.info('Fetching page %s', url)
         try:
             capturer_cmd = '%s -o %s -d %i %s' %\
-                (CHROME_HAR_CAPTURER, harpath, self._delay_after_onload, url)
+                (CHROME_HAR_CAPTURER, harpath, onload_delay, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
                 subprocess.check_call(capturer_cmd.split(),\
@@ -144,9 +149,9 @@ class ChromeLoader(Loader):
 
         # kill any subprocesses chrome might have opened
         try:
-            subprocess.check_output('killall chrome'.split())
+            subprocess.check_output('killall -q chrome'.split())
         except Exception as e:
-            logging.warning('Problem killing all chrome processes (maybe there were none): %s' % e)
+            logging.debug('Problem killing all chrome processes (maybe there were none): %s' % e)
 
         if self._xvfb_proc:
             logging.debug('Stopping XVFB')
