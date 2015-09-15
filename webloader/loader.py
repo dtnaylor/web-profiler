@@ -326,6 +326,7 @@ class Loader(object):
         after onLoad on the first trial. (The delay is useful to count how many
         objects are loaded after onLoad, and this is less likely to change from
         trial to trial than load time.)
+    :param configs: TODO: document
     '''
 
     def __init__(self, outdir='.', num_trials=1, http2=False, timeout=30,\
@@ -335,8 +336,9 @@ class Loader(object):
         save_screenshot=False, retries_per_trial=0,\
         stdout_filename=None, check_protocol_availability=True,\
         save_packet_capture=False, disable_quic=False, disable_spdy=False,\
-        log_ssl_keys=False, ignore_certificate_errors=False,
-        delay_after_onload=0, delay_first_trial_only=False):
+        log_ssl_keys=False, ignore_certificate_errors=False,\
+        delay_after_onload=0, delay_first_trial_only=False,\
+        configs=[{'tag':'', 'settings':{}}]):
         '''Initialize a Loader object.'''
 
         # options
@@ -364,6 +366,7 @@ class Loader(object):
         self._ignore_certificate_errors = ignore_certificate_errors
         self._delay_after_onload = delay_after_onload
         self._delay_first_trial_only = delay_first_trial_only
+        self._configs = configs
         
         # cummulative list of all URLs (one per trial)
         self._urls = []
@@ -395,9 +398,11 @@ class Loader(object):
         '''Returns a version of the URL suitable for use in a file name.'''
         return re.sub(r'[/\;,><&*:%=+@!#^()|?^]', '-', url)
 
-    def _outfile_path(self, url, suffix=None, trial=None):
+    def _outfile_path(self, url, suffix=None, trial=None, tag=None):
         '''Returns a path for an output file (e.g., HAR, screenshot, pcap)'''
         filename = self._sanitize_url(url)
+        if tag:
+            filename += '<%s>' % tag
         if trial:
             filename += '_trial%d' % trial
         if suffix:
@@ -556,58 +561,67 @@ class Loader(object):
                         status=PageResult.FAILURE_NOT_ACCESSIBLE)
                     continue
 
-                # If all is well, load URL num_trials times
-                for i in range(0, self._num_trials):
-                    try:
-                        # if load fails, keep trying self._retries_per_trial times
-                        tries_so_far = 0
-                        while tries_so_far <= self._retries_per_trial:
-                            tries_so_far += 1
+                # Load URLs for each config
+                for config in self._configs:
 
-                            # start tcpdump if we want a packet capture
-                            if self._save_packet_capture:
-                                pcap_path = self._outfile_path(url, suffix='.pcap', trial=i)
-                                tcpdump_command = 'sudo %s -w %s' % (TCPDUMP, pcap_path)
-                                logging.debug('Starting tcpdump: %s', tcpdump_command)
-                                tcpdump_proc = subprocess.Popen(tcpdump_command.split(),\
-                                    stdout=self._stdout_file, stderr=self._stdout_file)
+                    tag = config['tag']
+                    for k, v in config['settings'].iteritems():
+                        self.__dict__[k] = v  # FIXME: hacky
+                    self.__restart()
 
-                            # load the page
-                            result = self._load_page(url, self._outdir, i)
-                            logging.debug('Trial %d, try %d: %s' % (i, tries_so_far, result))
 
-                            # stop tcpdump (if it's running)
-                            if tcpdump_proc:
-                                logging.debug('Stopping tcpdump')
-                                os.system("sudo kill %s" % tcpdump_proc.pid)
-                                tcpdump_proc = None
+                    # If all is well, load URL num_trials times
+                    for i in range(0, self._num_trials):
+                        try:
+                            # if load fails, keep trying self._retries_per_trial times
+                            tries_so_far = 0
+                            while tries_so_far <= self._retries_per_trial:
+                                tries_so_far += 1
 
-                            # count consecutive timeouts (if too many, we might restart)
-                            if result.status == LoadResult.FAILURE_TIMEOUT:
-                                self._consecutive_timeouts += 1
-                            else:
-                                self._consecutive_timeouts = 0
+                                # start tcpdump if we want a packet capture
+                                if self._save_packet_capture:
+                                    pcap_path = self._outfile_path(url, suffix='.pcap', trial=i, tag=tag)
+                                    tcpdump_command = 'sudo %s -w %s' % (TCPDUMP, pcap_path)
+                                    logging.debug('Starting tcpdump: %s', tcpdump_command)
+                                    tcpdump_proc = subprocess.Popen(tcpdump_command.split(),\
+                                        stdout=self._stdout_file, stderr=self._stdout_file)
 
-                            # restart if things are going wrong or just to clean up
-                            if ((result.status == LoadResult.FAILURE_UNKNOWN\
-                                    or self._consecutive_timeouts >= 3)\
-                                    and self._restart_on_fail)\
-                                    or self._restart_each_time:
-                                self.__restart()
+                                # load the page
+                                result = self._load_page(url, self._outdir, i, tag=tag)
+                                logging.debug('Trial %d, try %d: %s' % (i, tries_so_far, result))
 
-                            # record load status
-                            if result.status == LoadResult.SUCCESS:
-                                self._urls.append(url)
-                                self._load_results[url].append(result)
-                                break  # success, don't retry
-                            elif tries_so_far > self._retries_per_trial:
-                                # this was the last try, record the failure
-                                self._urls.append(url)
-                                self._load_results[url].append(result)
+                                # stop tcpdump (if it's running)
+                                if tcpdump_proc:
+                                    logging.debug('Stopping tcpdump')
+                                    os.system("sudo kill %s" % tcpdump_proc.pid)
+                                    tcpdump_proc = None
 
-                    except Exception as e:
-                        logging.exception('Error loading page %s: %s\n%s', url, e,\
-                            traceback.format_exc())
+                                # count consecutive timeouts (if too many, we might restart)
+                                if result.status == LoadResult.FAILURE_TIMEOUT:
+                                    self._consecutive_timeouts += 1
+                                else:
+                                    self._consecutive_timeouts = 0
+
+                                # restart if things are going wrong or just to clean up
+                                if ((result.status == LoadResult.FAILURE_UNKNOWN\
+                                        or self._consecutive_timeouts >= 3)\
+                                        and self._restart_on_fail)\
+                                        or self._restart_each_time:
+                                    self.__restart()
+
+                                # record load status
+                                if result.status == LoadResult.SUCCESS:
+                                    self._urls.append(url)
+                                    self._load_results[url].append(result)
+                                    break  # success, don't retry
+                                elif tries_so_far > self._retries_per_trial:
+                                    # this was the last try, record the failure
+                                    self._urls.append(url)
+                                    self._load_results[url].append(result)
+
+                        except Exception as e:
+                            logging.exception('Error loading page %s: %s\n%s', url, e,\
+                                traceback.format_exc())
 
                 # Save PageResult summarizing the individual trial LoadResults
                 self._page_results[url] = PageResult(url,\

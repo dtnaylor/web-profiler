@@ -14,7 +14,7 @@ from webloader.chrome_loader import ChromeLoader
 
 
 def main():
-    logging.info('========== HAR GENERATOR LAUNCHED ==========')
+    logging.info('=============== HAR GENERATOR LAUNCHED ===============')
 
     # make url list
     urls = []
@@ -31,19 +31,27 @@ def main():
         logging.getLogger(__name__).error('No URLs were specified.')
         sys.exit(-1)
 
+    # load experiment configurations
+    configs = None
+    if args.configs:
+        with open(args.configs, 'r') as f:
+            configs = eval(f.read())
+
     # load pages and save HARs
     if len(urls) > 0:
         loader = ChromeLoader(outdir=args.outdir, user_agent=args.useragent,\
             num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
             retries_per_trial=1, stdout_filename=args.stdoutfile,\
-            log_ssl_keys=args.log_ssl_keys, disable_spdy=args.disable_spdy,\
+            log_ssl_keys=args.log_ssl_keys,\
+            disable_spdy=args.disable_spdy,\
             save_packet_capture=args.packet_trace,\
             check_protocol_availability=args.disable_protocol_check,\
             ignore_certificate_errors=True,\
             restart_each_time=args.restart_each_time,\
             timeout=args.timeout,\
             delay_after_onload=args.delay_after_onload,\
-            delay_first_trial_only=args.delay_first_trial_only)
+            delay_first_trial_only=args.delay_first_trial_only,\
+            configs=configs)
         loader.load_pages(urls)
 
         # pickle load results
@@ -62,6 +70,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--load_pages', nargs='+', help='URL(s) to load (to load multiple pages, separate URLs with spaces). A HAR will be generated for each page in outdir.')
     parser.add_argument('-f', '--url_file', default=None, help='Generate HARs for the URLs in the specified file (one URL per line)')
     parser.add_argument('-o', '--outdir', default='.', help='Destination directory for HAR files.')
+    parser.add_argument('-c', '--configs', default=None, help='File path for experiment configurations file.')
     parser.add_argument('-n', '--numtrials', default=1, type=int, help='Number of times to load each URL.')
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
     parser.add_argument('-d', '--delay-after-onload', type=int, default=0, help='Time in ms to continue recording objects after onLoad fires.')

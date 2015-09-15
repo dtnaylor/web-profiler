@@ -42,10 +42,10 @@ class ChromeLoader(Loader):
         self._xvfb_proc = None
         self._chrome_proc = None
 
-    def _load_page(self, url, outdir, trial_num=-1):
+    def _load_page(self, url, outdir, trial_num=-1, tag=None):
         # path for new HAR file
         if self._save_har:
-            harpath = self._outfile_path(url, suffix='.har', trial=trial_num)
+            harpath = self._outfile_path(url, suffix='.har', trial=trial_num, tag=tag)
         else:
             harpath = '/dev/null'
         logging.debug('Will save HAR to %s', harpath)
@@ -56,7 +56,7 @@ class ChromeLoader(Loader):
             onload_delay = 0
     
         # load the specified URL
-        logging.info('Fetching page %s', url)
+        logging.info('Fetching page %s (%s)', url, tag)
         try:
             capturer_cmd = '%s -o %s -d %i %s' %\
                 (CHROME_HAR_CAPTURER, harpath, onload_delay, url)
@@ -128,7 +128,7 @@ class ChromeLoader(Loader):
             logging.debug('Starting Chrome: %s', chrome_command)
             self._chrome_proc = subprocess.Popen(chrome_command.split(),\
                 stdout=stdout, stderr=stderr)
-            sleep(5)
+            sleep(4)
                 
             # check if Xvfb failed to start and process terminated
             retcode = self._chrome_proc.poll()
