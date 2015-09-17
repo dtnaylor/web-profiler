@@ -545,6 +545,7 @@ class Loader(object):
         try:
             if not self.__setup():
                 logging.error('Error setting up loader')
+                self.__teardown()
                 return
 
             for url in urls:

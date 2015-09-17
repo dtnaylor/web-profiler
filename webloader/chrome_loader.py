@@ -62,7 +62,7 @@ class ChromeLoader(Loader):
         # load the specified URL
         logging.info('Fetching page %s (%s)', url, tag)
         try:
-            capturer_cmd = '%s -o %s %s %i %s' %\
+            capturer_cmd = '%s -o %s %s %s' %\
                 (CHROME_HAR_CAPTURER, harpath, capturer_args, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
@@ -146,10 +146,13 @@ class ChromeLoader(Loader):
 
 
     def _teardown(self):
-        if self._chrome_proc:
-            logging.debug('Stopping Chrome')
-            self._chrome_proc.kill()
-            self._chrome_proc.wait()
+        try:
+            if self._chrome_proc:
+                logging.debug('Stopping Chrome')
+                self._chrome_proc.kill()
+                self._chrome_proc.wait()
+        except:
+            logging.exception('Error closing Chrome')
 
         # kill any subprocesses chrome might have opened
         try:
@@ -157,7 +160,10 @@ class ChromeLoader(Loader):
         except Exception as e:
             logging.debug('Problem killing all chrome processes (maybe there were none): %s' % e)
 
-        if self._xvfb_proc:
-            logging.debug('Stopping XVFB')
-            self._xvfb_proc.kill()
+        try:
+            if self._xvfb_proc:
+                logging.debug('Stopping XVFB')
+                self._xvfb_proc.kill()
             self._xvfb_proc.wait()
+        except:
+            logging.exception('Error closing Xvfb')
