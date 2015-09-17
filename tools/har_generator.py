@@ -42,6 +42,7 @@ def main():
         loader = ChromeLoader(outdir=args.outdir, user_agent=args.useragent,\
             num_trials=args.numtrials, restart_on_fail=True, save_har=True,\
             retries_per_trial=1, stdout_filename=args.stdoutfile,\
+            disable_network_cache=args.disable_network_cache,\
             log_ssl_keys=args.log_ssl_keys,\
             disable_spdy=args.disable_spdy,\
             save_packet_capture=args.packet_trace,\
@@ -75,6 +76,7 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--useragent', default=None, help='Custom user agent. If None, use browser default.')
     parser.add_argument('-d', '--delay-after-onload', type=int, default=0, help='Time in ms to continue recording objects after onLoad fires.')
     parser.add_argument('--delay-first-trial-only', action='store_true', default=False, help='Apply onLoad delay only to the first trial.')
+    parser.add_argument('--disable-network-cache', action='store_true', default=False, help='Send cache-control headers telling caches not to respond.')
     parser.add_argument('--restart-each-time', action='store_true', default=False, help='Restart Chrome before each page load.')
     parser.add_argument('--disable-protocol-check', action='store_true', help='Do not check if the site supports HTTPS')
     parser.add_argument('--packet-trace', action='store_true', default=False, help='Save a packet trace for each page load.')

@@ -18,7 +18,6 @@ DISPLAY = ':99'
 # TODO: final URL?
 # TODO: pass timeout to chrome?
 # TODO: FAILURE_NO_200?
-# TODO: Cache-Control header
 
 class ChromeLoader(Loader):
     '''Subclass of :class:`Loader` that loads pages using Chrome.
@@ -26,7 +25,6 @@ class ChromeLoader(Loader):
     .. note:: The :class:`ChromeLoader` currently does not time page load.
     .. note:: The :class:`ChromeLoader` currently does not save screenshots.
     .. note:: The :class:`ChromeLoader` currently does not support single-object loading (i.e., it always loads the full page).
-    .. note:: The :class:`ChromeLoader` currently does not support disabling network caches.
     .. note:: The :class:`ChromeLoader` currently does not support saving screenshots.
     '''
 
@@ -34,8 +32,6 @@ class ChromeLoader(Loader):
         super(ChromeLoader, self).__init__(**kwargs)
         if not self._full_page:
             raise NotImplementedError('ChromeLoader does not support loading only an object')
-        if self._disable_network_cache:
-            raise NotImplementedError('ChromeLoader does not support disabling network caches.')
         if self._save_screenshot:
             raise NotImplementedError('ChromeLoader does not support saving screenshots.')
 
@@ -50,16 +46,24 @@ class ChromeLoader(Loader):
             harpath = '/dev/null'
         logging.debug('Will save HAR to %s', harpath)
 
-        # onload delay
+
+        # build chrome-har-capturer arguments
+        capturer_args = ''
+
         onload_delay = self._delay_after_onload
         if self._delay_first_trial_only and trial_num != 0:
             onload_delay = 0
+        capturer_args += ' -d %i' % onload_delay
+
+        if self._disable_network_cache:
+            capturer_args += ' --no-network-cache'
+
     
         # load the specified URL
         logging.info('Fetching page %s (%s)', url, tag)
         try:
-            capturer_cmd = '%s -o %s -d %i %s' %\
-                (CHROME_HAR_CAPTURER, harpath, onload_delay, url)
+            capturer_cmd = '%s -o %s %s %i %s' %\
+                (CHROME_HAR_CAPTURER, harpath, capturer_args, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
                 subprocess.check_call(capturer_cmd.split(),\
