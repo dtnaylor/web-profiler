@@ -326,6 +326,8 @@ class Loader(object):
         after onLoad on the first trial. (The delay is useful to count how many
         objects are loaded after onLoad, and this is less likely to change from
         trial to trial than load time.)
+    :param primer_load_first: load the page once before beginning normal trials
+        (e.g., to prime DNS caches)
     :param configs: TODO: document
     '''
 
@@ -338,7 +340,8 @@ class Loader(object):
         save_packet_capture=False, disable_quic=False, disable_spdy=False,\
         log_ssl_keys=False, ignore_certificate_errors=False,\
         delay_after_onload=0, delay_first_trial_only=False,\
-        configs=[{'tag':'', 'settings':{}}]):
+        primer_load_first=False,\
+        configs=[{'tag':'default', 'settings':{}}]):
         '''Initialize a Loader object.'''
 
         # options
@@ -366,6 +369,7 @@ class Loader(object):
         self._ignore_certificate_errors = ignore_certificate_errors
         self._delay_after_onload = delay_after_onload
         self._delay_first_trial_only = delay_first_trial_only
+        self._primer_load_first = primer_load_first
         self._configs = configs
         
         # cummulative list of all URLs (one per trial)
@@ -403,7 +407,7 @@ class Loader(object):
         filename = self._sanitize_url(url)
         if tag:
             filename += '<%s>' % tag
-        if trial:
+        if trial != None:
             filename += '_trial%d' % trial
         if suffix:
             filename += suffix
@@ -561,6 +565,16 @@ class Loader(object):
                     self._page_results[url] = PageResult(url,\
                         status=PageResult.FAILURE_NOT_ACCESSIBLE)
                     continue
+
+                # Load page once before actual trials (e.g., to prime DNS cache)
+                if self._primer_load_first:
+                    tries_so_far = 0
+                    while tries_so_far <= self._retries_per_trial:
+                        tries_so_far += 1
+                        result = self._load_page(url, self._outdir, None, tag='primer')
+                        if result.status == LoadResult.SUCCESS:
+                            break
+                    
 
                 # Load URLs for each config
                 for config in self._configs:

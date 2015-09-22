@@ -38,7 +38,7 @@ class ChromeLoader(Loader):
         self._xvfb_proc = None
         self._chrome_proc = None
 
-    def _load_page(self, url, outdir, trial_num=-1, tag=None):
+    def _load_page(self, url, outdir, trial_num=None, tag=None):
         # path for new HAR file
         if self._save_har:
             harpath = self._outfile_path(url, suffix='.har', trial=trial_num, tag=tag)
@@ -70,7 +70,7 @@ class ChromeLoader(Loader):
                     stdout=self._stdout_file, stderr=subprocess.STDOUT)
         
         except TimeoutError:
-            logging.exception('* Timeout fetching %s', url)
+            logging.error('Timeout fetching %s', url)
             return LoadResult(LoadResult.FAILURE_TIMEOUT, url)
         except subprocess.CalledProcessError as e:
             logging.exception('Error loading %s: %s\n%s' % (url, e, e.output))

@@ -52,6 +52,7 @@ def main():
             timeout=args.timeout,\
             delay_after_onload=args.delay_after_onload,\
             delay_first_trial_only=args.delay_first_trial_only,\
+            primer_load_first=args.primer_load_first,\
             configs=configs)
         loader.load_pages(urls)
 
@@ -83,6 +84,7 @@ if __name__ == "__main__":
     parser.add_argument('--log-ssl-keys', action='store_true', default=False, help='Log SSL keys')
     parser.add_argument('--disable-spdy', action='store_true', default=False, help='Disable SPDY/HTTP2')
     parser.add_argument('--timeout', type=int, default=30, help='Timout in seconds')
+    parser.add_argument('--primer-load-first', action='store_true', default=False, help='Load page once before actual trials (e.g., to prime DNS cache.')
     parser.add_argument('-q', '--quiet', action='store_true', default=False, help='only print errors')
     parser.add_argument('-v', '--verbose', action='store_true', default=False, help='print debug info. --quiet wins if both are present')
     parser.add_argument('-g', '--logfile', default=None, help='Path for log file.')
