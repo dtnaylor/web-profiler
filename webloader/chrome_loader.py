@@ -62,11 +62,11 @@ class ChromeLoader(Loader):
         # load the specified URL
         logging.info('Fetching page %s (%s)', url, tag)
         try:
-            capturer_cmd = '%s -o %s %s %s' %\
+            capturer_cmd = '%s -o "%s" %s %s' %\
                 (CHROME_HAR_CAPTURER, harpath, capturer_args, url)
             logging.debug('Running capturer: %s', capturer_cmd)
             with Timeout(seconds=self._timeout+5):
-                subprocess.check_call(capturer_cmd.split(),\
+                subprocess.check_call(capturer_cmd, shell=True,\
                     stdout=self._stdout_file, stderr=subprocess.STDOUT)
         
         except TimeoutError:
