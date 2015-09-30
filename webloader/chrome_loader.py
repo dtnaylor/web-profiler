@@ -10,6 +10,7 @@ CHROME = '/usr/bin/env google-chrome'
 CHROME_HAR_CAPTURER = '/usr/bin/env chrome-har-capturer'
 XVFB = '/usr/bin/env Xvfb'
 DISPLAY = ':99'
+CURL = '/usr/bin/env curl'
 
 # TODO: test if isntalled chrome can support HTTP2
 # TODO: pick different display if multiple instances are used at once
@@ -95,7 +96,7 @@ class ChromeLoader(Loader):
                 logging.debug('Starting XVFB: %s', xvfb_command)
                 self._xvfb_proc = subprocess.Popen(xvfb_command.split(),\
                     stdout=stdout, stderr=stderr)
-                sleep(2)
+                sleep(1)
 
                 # check if Xvfb failed to start and process terminated
                 retcode = self._xvfb_proc.poll()
@@ -132,12 +133,30 @@ class ChromeLoader(Loader):
             logging.debug('Starting Chrome: %s', chrome_command)
             self._chrome_proc = subprocess.Popen(chrome_command.split(),\
                 stdout=stdout, stderr=stderr)
-            sleep(4)
                 
-            # check if Xvfb failed to start and process terminated
-            retcode = self._chrome_proc.poll()
-            if retcode != None:
-                raise("Chrome proc exited with return code: %i" % retcode)
+
+            # wait until chrome remote debugging is ready
+            with Timeout(seconds=10):
+                curl_retcode = -1
+                while curl_retcode != 0:
+                    # try to access chrome remote debug interface
+                    curl_cmd = '%s -sS --max-time 1 -o /dev/null localhost:9222/json' % CURL
+                    curl_retcode = subprocess.call(curl_cmd.split(),\
+                        stdout=self._stdout_file, stderr=subprocess.STDOUT)
+
+                    logging.debug('Checking if Chrome remote debug is ready. Curl return code: %d' % curl_retcode)
+                
+                    # check to see if chrome exited for some reason
+                    # (e.g., if Xvfb failed to start)
+                    chrome_retcode = self._chrome_proc.poll()
+                    if chrome_retcode != None:
+                        raise("Chrome proc exited with return code: %i" % chrome_retcode)
+
+                    sleep(0.5)
+
+        except TimeoutError:
+            logging.error('Timeout waiting for Chrome to be ready')
+            return False
         except Exception as e:
             logging.exception("Error starting Chrome")
             return False

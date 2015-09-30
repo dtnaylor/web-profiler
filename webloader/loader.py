@@ -478,7 +478,23 @@ class Loader(object):
                     self._stdout_filename)
                 self._stdout_file = None
 
-        return self._setup()
+        # if the loader fails to set itself up, try a few more times with
+        # longer timeouts in between
+        tries = 10
+        tries_so_far = 0
+        setup_succeeded = False
+        while (not setup_succeeded) and (tries_so_far < tries):
+            logging.debug('Setup attempt #%d' % tries_so_far)
+            setup_succeeded = self._setup()
+
+            if not setup_succeeded:
+                tries_so_far += 1
+                logging.warn('Error setting up loader. Will try %d more times' % (tries-tries_so_far))
+                self._teardown()
+                time.sleep(tries_so_far)
+
+        return setup_succeeded
+
 
     def _teardown(self):
         '''Subclasses can override to clean up (e.g., kill Xvfb)'''
@@ -497,9 +513,13 @@ class Loader(object):
         '''Tear down and set up the loader'''
         logging.debug('Restarting loader')
         self.__teardown()
-        time.sleep(2)
-        self.__setup()
+        time.sleep(1)
+        setup_succeeded = self.__setup()
         self._num_restarts += 1
+
+        if not setup_succeeded:
+            raise('Failed to restart loader')
+
 
     def __getstate__(self):
         '''override getstate so we don't try to pickle the stdout file object'''
@@ -553,96 +573,102 @@ class Loader(object):
                 return
 
             for url in urls:
+                try:
+                    # make sure URL is well-formed (e.g., has protocol, etc.)
+                    url = self._check_url(url)
 
-                # make sure URL is well-formed (e.g., has protocol, etc.)
-                url = self._check_url(url)
+                    # make sure URL is accessible over specified protocol
+                    if self._check_protocol_availability and \
+                        not self._check_protocol_available(url):
+                        logging.info('%s is not accessible', url)
+                        self._urls.append(url)
+                        self._page_results[url] = PageResult(url,\
+                            status=PageResult.FAILURE_NOT_ACCESSIBLE)
+                        continue
 
-                # make sure URL is accessible over specified protocol
-                if self._check_protocol_availability and \
-                    not self._check_protocol_available(url):
-                    logging.info('%s is not accessible', url)
-                    self._urls.append(url)
+                    # Load page once before actual trials (e.g., to prime DNS cache)
+                    if self._primer_load_first:
+                        tries_so_far = 0
+                        while tries_so_far <= self._retries_per_trial:
+                            tries_so_far += 1
+                            result = self._load_page(url, self._outdir, None, tag='primer')
+                            if result.status == LoadResult.SUCCESS:
+                                break
+                        
+
+                    # Load URLs for each config
+                    for config in self._configs:
+
+                        tag = config['tag']
+                        for k, v in config['settings'].iteritems():
+                            self.__dict__[k] = v  # FIXME: hacky
+                        self.__restart()
+
+
+                        # If all is well, load URL num_trials times
+                        for i in range(0, self._num_trials):
+                            try:
+                                # if load fails, keep trying self._retries_per_trial times
+                                tries_so_far = 0
+                                while tries_so_far <= self._retries_per_trial:
+                                    tries_so_far += 1
+
+                                    # start tcpdump if we want a packet capture
+                                    if self._save_packet_capture:
+                                        pcap_path = self._outfile_path(url, suffix='.pcap', trial=i, tag=tag)
+                                        tcpdump_command = 'sudo %s -w %s' % (TCPDUMP, pcap_path)
+                                        logging.debug('Starting tcpdump: %s', tcpdump_command)
+                                        tcpdump_proc = subprocess.Popen(tcpdump_command.split(),\
+                                            stdout=self._stdout_file, stderr=self._stdout_file)
+
+                                    # load the page
+                                    result = self._load_page(url, self._outdir, i, tag=tag)
+                                    logging.debug('Trial %d, try %d: %s' % (i, tries_so_far, result))
+
+                                    # stop tcpdump (if it's running)
+                                    if tcpdump_proc:
+                                        logging.debug('Stopping tcpdump')
+                                        os.system("sudo kill %s" % tcpdump_proc.pid)
+                                        tcpdump_proc = None
+
+                                    # count consecutive timeouts (if too many, we might restart)
+                                    if result.status == LoadResult.FAILURE_TIMEOUT:
+                                        self._consecutive_timeouts += 1
+                                    else:
+                                        self._consecutive_timeouts = 0
+
+                                    # restart if things are going wrong or just to clean up
+                                    if ((result.status == LoadResult.FAILURE_UNKNOWN\
+                                            or self._consecutive_timeouts >= 3)\
+                                            and self._restart_on_fail)\
+                                            or self._restart_each_time:
+                                        self.__restart()
+
+                                    # record load status
+                                    if result.status == LoadResult.SUCCESS:
+                                        self._urls.append(url)
+                                        self._load_results[url].append(result)
+                                        break  # success, don't retry
+                                    elif tries_so_far > self._retries_per_trial:
+                                        # this was the last try, record the failure
+                                        self._urls.append(url)
+                                        self._load_results[url].append(result)
+
+                            # trial level try block
+                            except:
+                                logging.exception('Error loading URL (trial %d): %s ', url, i)
+
+                    # Save PageResult summarizing the individual trial LoadResults
                     self._page_results[url] = PageResult(url,\
-                        status=PageResult.FAILURE_NOT_ACCESSIBLE)
-                    continue
+                        load_results=self._load_results[url])
 
-                # Load page once before actual trials (e.g., to prime DNS cache)
-                if self._primer_load_first:
-                    tries_so_far = 0
-                    while tries_so_far <= self._retries_per_trial:
-                        tries_so_far += 1
-                        result = self._load_page(url, self._outdir, None, tag='primer')
-                        if result.status == LoadResult.SUCCESS:
-                            break
-                    
+                # url level try block
+                except:
+                    logging.exception('Error loading URL: %s' % url)
 
-                # Load URLs for each config
-                for config in self._configs:
-
-                    tag = config['tag']
-                    for k, v in config['settings'].iteritems():
-                        self.__dict__[k] = v  # FIXME: hacky
-                    self.__restart()
-
-
-                    # If all is well, load URL num_trials times
-                    for i in range(0, self._num_trials):
-                        try:
-                            # if load fails, keep trying self._retries_per_trial times
-                            tries_so_far = 0
-                            while tries_so_far <= self._retries_per_trial:
-                                tries_so_far += 1
-
-                                # start tcpdump if we want a packet capture
-                                if self._save_packet_capture:
-                                    pcap_path = self._outfile_path(url, suffix='.pcap', trial=i, tag=tag)
-                                    tcpdump_command = 'sudo %s -w %s' % (TCPDUMP, pcap_path)
-                                    logging.debug('Starting tcpdump: %s', tcpdump_command)
-                                    tcpdump_proc = subprocess.Popen(tcpdump_command.split(),\
-                                        stdout=self._stdout_file, stderr=self._stdout_file)
-
-                                # load the page
-                                result = self._load_page(url, self._outdir, i, tag=tag)
-                                logging.debug('Trial %d, try %d: %s' % (i, tries_so_far, result))
-
-                                # stop tcpdump (if it's running)
-                                if tcpdump_proc:
-                                    logging.debug('Stopping tcpdump')
-                                    os.system("sudo kill %s" % tcpdump_proc.pid)
-                                    tcpdump_proc = None
-
-                                # count consecutive timeouts (if too many, we might restart)
-                                if result.status == LoadResult.FAILURE_TIMEOUT:
-                                    self._consecutive_timeouts += 1
-                                else:
-                                    self._consecutive_timeouts = 0
-
-                                # restart if things are going wrong or just to clean up
-                                if ((result.status == LoadResult.FAILURE_UNKNOWN\
-                                        or self._consecutive_timeouts >= 3)\
-                                        and self._restart_on_fail)\
-                                        or self._restart_each_time:
-                                    self.__restart()
-
-                                # record load status
-                                if result.status == LoadResult.SUCCESS:
-                                    self._urls.append(url)
-                                    self._load_results[url].append(result)
-                                    break  # success, don't retry
-                                elif tries_so_far > self._retries_per_trial:
-                                    # this was the last try, record the failure
-                                    self._urls.append(url)
-                                    self._load_results[url].append(result)
-
-                        except Exception as e:
-                            logging.exception('Error loading page %s: %s\n%s', url, e,\
-                                traceback.format_exc())
-
-                # Save PageResult summarizing the individual trial LoadResults
-                self._page_results[url] = PageResult(url,\
-                    load_results=self._load_results[url])
-        except Exception as e:
-            logging.exception('Error loading pages: %s\n%s', e, traceback.format_exc())
+        # load_pages level try block
+        except:
+            logging.exception('Error loading pages')
         finally:
             # stop tcpdump (if it's running)
             try:
