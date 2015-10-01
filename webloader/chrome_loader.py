@@ -136,7 +136,7 @@ class ChromeLoader(Loader):
                 
 
             # wait until chrome remote debugging is ready
-            with Timeout(seconds=10):
+            with Timeout(seconds=5):
                 curl_retcode = -1
                 while curl_retcode != 0:
                     # try to access chrome remote debug interface
