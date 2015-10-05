@@ -17,6 +17,7 @@ class TCPLoader(Loader):
     .. note:: The :class:`TCPLoader` currently does not support local caching.
     .. note:: The :class:`TCPLoader` currently does not support disabling network caching.
     .. note:: The :class:`TCPLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`TCPLoader` currently does not support saving content.
     '''
 
     def __init__(self, **kwargs):
@@ -35,6 +36,8 @@ class TCPLoader(Loader):
             raise NotImplementedError('TCPLoader does not support saving screenshots.')
         if self._delay_after_onload != 0:
             raise NotImplementedError('TCPLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('TCPLoader does not support saving content')
 
 
     def _load_page(self, url, outdir, trial_num=-1):

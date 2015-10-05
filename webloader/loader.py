@@ -306,6 +306,7 @@ class Loader(object):
         load (e.g., reboot chrome to close open connections)
     :param save_har: save a HAR file to the output directory
     :param save_screenshot: save a screenshot to the output directory
+    :param save_content: save HTTP message bodies (options: 'always', 'first', 'never')
     :param retries_per_trial: if a trial fails, retry this many times (beyond
         first)
     :param stdout_filename: if the loader launches other procs (e.g., browser),
@@ -335,7 +336,7 @@ class Loader(object):
         disable_local_cache=True, disable_network_cache=False, full_page=True,\
         user_agent=None, headless=True, restart_on_fail=False,\
         restart_each_time=False, proxy=None, save_har=False,\
-        save_screenshot=False, retries_per_trial=0,\
+        save_screenshot=False, save_content='never', retries_per_trial=0,\
         stdout_filename=None, check_protocol_availability=True,\
         save_packet_capture=False, disable_quic=False, disable_spdy=False,\
         log_ssl_keys=False, ignore_certificate_errors=False,\
@@ -358,6 +359,7 @@ class Loader(object):
         self._restart_each_time = restart_each_time
         self._save_har = save_har
         self._save_screenshot = save_screenshot
+        self._save_content = save_content
         self._retries_per_trial = retries_per_trial
         self._stdout_filename = stdout_filename
         self._proxy = proxy

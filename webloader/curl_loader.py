@@ -17,6 +17,7 @@ class CurlLoader(Loader):
     .. note:: The :class:`CurlLoader` currently does not support full page loading (i.e., fetching a page's subresources).
     .. note:: The :class:`CurlLoader` currently does not support saving HARs.
     .. note:: The :class:`CurlLoader` currently does not support saving screenshots.
+    .. note:: The :class:`CurlLoader` currently does not support saving content.
     '''
 
     def __init__(self, **kwargs):
@@ -33,6 +34,8 @@ class CurlLoader(Loader):
             raise NotImplementedError('CurlLoader does not support saving screensthos')
         if self._delay_after_onload != 0:
             raise NotImplementedError('CurlLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('CurlLoader does not support saving content')
             
         
         self._image_paths_by_url = defaultdict(list)

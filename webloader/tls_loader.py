@@ -18,6 +18,7 @@ class TLSLoader(Loader):
     .. note:: The :class:`TLSLoader` currently does not support local caching.
     .. note:: The :class:`TLSLoader` currently does not support disabling network caching.
     .. note:: The :class:`TLSLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`TLSLoader` currently does not support saving content.
     '''
 
     def __init__(self, test_false_start=False, test_session_resumption=False,\
@@ -37,6 +38,8 @@ class TLSLoader(Loader):
             raise NotImplementedError('TLSLoader does not support saving screenshots.')
         if self._delay_after_onload != 0:
             raise NotImplementedError('TLSLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('TLSLoader does not support saving content')
 
         self._test_false_start = test_false_start
         self._test_session_resumption = test_session_resumption

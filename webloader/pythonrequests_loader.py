@@ -17,6 +17,7 @@ class PythonRequestsLoader(Loader):
     .. note:: The :class:`PythonRequestsLoader` currently does not support full page loading (i.e., fetching a page's subresources).
     .. note:: The :class:`PythonRequestsLoader` currently does not support saving HARs.
     .. note:: The :class:`PythonRequestsLoader` currently does not support saving screenshots.
+    .. note:: The :class:`PythonRequestsLoader` currently does not support saving content.
     '''
 
     def __init__(self, **kwargs):
@@ -35,6 +36,8 @@ class PythonRequestsLoader(Loader):
             raise NotImplementedError('PythonRequestsLoader does not support saving screenshots.')
         if self._delay_after_onload != 0:
             raise NotImplementedError('PyhtonRequestsLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('PyhtonRequestsLoader does not support saving content')
 
 
     def _load_page(self, url, outdir, trial_num=-1):

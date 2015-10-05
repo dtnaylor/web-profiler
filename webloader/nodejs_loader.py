@@ -18,6 +18,7 @@ class NodeJsLoader(Loader):
     .. note:: The :class:`NodeJsLoader` currently does not support disabling network caches.
     .. note:: The :class:`NodeJsLoader` currently does not support saving HARs.
     .. note:: The :class:`NodeJsLoader` currently does not support saving screenshots.
+    .. note:: The :class:`NodeJsLoader` currently does not support saving content.
     '''
 
     def __init__(self, **kwargs):
@@ -36,6 +37,8 @@ class NodeJsLoader(Loader):
             raise NotImplementedError('NodeJsLoader does not support saving screenshots.')
         if self._delay_after_onload != 0:
             raise NotImplementedError('NodeJsLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('NodeJsLoader does not support saving content')
         
         self._image_paths_by_url = defaultdict(list)
 

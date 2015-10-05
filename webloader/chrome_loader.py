@@ -59,6 +59,10 @@ class ChromeLoader(Loader):
         if self._disable_network_cache:
             capturer_args += ' --no-network-cache'
 
+        if self._save_content == 'always' or\
+           (self._save_content == 'first' and trial_num == 0):
+            capturer_args += ' -c'
+
     
         # load the specified URL
         logging.info('Fetching page %s (%s)', url, tag)

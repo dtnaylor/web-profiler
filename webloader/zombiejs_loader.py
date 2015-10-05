@@ -21,6 +21,7 @@ class ZombieJSLoader(Loader):
     .. note:: The :class:`ZombieJSLoader` currently does not support local caching.
     .. note:: The :class:`ZombieJSLoader` currently does not support disabling network caching.
     .. note:: The :class:`ZombieJSLoader` currently does not support single-object loading (i.e., it always loads the full page).
+    .. note:: The :class:`ZombieJSLoader` currently does not support saving content.
     '''
 
     def __init__(self, **kwargs):
@@ -35,6 +36,8 @@ class ZombieJSLoader(Loader):
             raise NotImplementedError('ZombieJSLoader does not support disabling network caches.')        
         if self._delay_after_onload != 0:
             raise NotImplementedError('ZombieJSLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('ZombieJSLoader does not support saving content')
 
     def _load_page(self, url, outdir, trial_num=-1):    
         # load the specified URL

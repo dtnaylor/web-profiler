@@ -34,6 +34,7 @@ class FirefoxLoader(Loader):
     .. note:: The :class:`FirefoxLoader` currently does not support single-object loading (i.e., it always loads the full page).
     .. note:: The :class:`FirefoxLoader` currently does not support disabling network caches.
     .. note:: The :class:`FirefoxLoader` currently does not support saving screenshots.
+    .. note:: The :class:`FirefoxLoader` currently does not support saving content.
     '''
 
     def __init__(self, selenium=True, **kwargs):
@@ -48,6 +49,8 @@ class FirefoxLoader(Loader):
             raise NotImplementedError('FirefoxLoader does not support saving screenshots')
         if self._delay_after_onload != 0:
             raise NotImplementedError('FirefoxLoader does not support delay after onload')
+        if self._save_content != 'never':
+            raise NotImplementedError('FirefoxLoader does not support saving content')
 
         self._selenium = selenium
         self._xvfb_proc = None
