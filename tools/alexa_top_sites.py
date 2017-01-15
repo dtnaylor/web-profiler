@@ -146,7 +146,7 @@ def main():
         else:
             r = requests.get(ALEXA_GLOBAL_URL % page)
             
-        for match in re.finditer(r'<a href="/siteinfo/(.*)">', r.text):
+        for match in re.finditer(r'<a href="/siteinfo/(+*)">', r.text):
             sitelist.append(match.group(1))
         page += 1
 
