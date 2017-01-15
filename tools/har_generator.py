@@ -32,7 +32,7 @@ def main():
         sys.exit(-1)
 
     # load experiment configurations
-    configs = None
+    configs=[{'tag':'default', 'settings':{}}]
     if args.configs:
         with open(args.configs, 'r') as f:
             configs = eval(f.read())
